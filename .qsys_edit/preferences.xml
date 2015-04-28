@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<preferences>
+ <debug showDebugMenu="0" />
+ <systemtable filter="All Interfaces">
+  <columns>
+   <connections preferredWidth="255" />
+   <irq preferredWidth="47" />
+   <name preferredWidth="166" />
+   <inputclock preferredWidth="126" />
+   <export preferredWidth="233" />
+  </columns>
+ </systemtable>
+ <clocktable>
+  <columns>
+   <clockname preferredWidth="399" />
+   <clocksource preferredWidth="398" />
+   <frequency preferredWidth="379" />
+  </columns>
+ </clocktable>
+ <window width="1280" height="770" x="0" y="0" />
+ <library
+   expandedCategories="Library/Verification/Simulation,Project,Library/Verification,Library,Library/Embedded Processors" />
+ <hdlexample language="VERILOG" />
+ <generation block_symbol_file="1" />
+</preferences>
