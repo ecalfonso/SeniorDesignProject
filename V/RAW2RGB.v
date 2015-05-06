@@ -78,9 +78,9 @@ reg				mDVAL;
 wire [11:0] grayscale;
 assign grayscale = (mCCD_R[11:0]+mCCD_G[12:1]+mCCD_B[11:0])/3;
 
-assign	oRed		=	(grayscale[7:0] > iThreshold) ? 1'b1 : 1'b0;
-assign	oGreen	=	(grayscale[7:0] > iThreshold) ? 1'b1 : 1'b0;
-assign	oBlue		=	(grayscale[7:0] > iThreshold) ? 1'b1 : 1'b0;
+assign	oRed		=	(grayscale[7:0] < iThreshold) ? 1'b1 : 1'b0;
+assign	oGreen	=	(grayscale[7:0] < iThreshold) ? 1'b1 : 1'b0;
+assign	oBlue		=	(grayscale[7:0] < iThreshold) ? 1'b1 : 1'b0;
 assign	oDVAL	=	mDVAL;
 
 Line_Buffer 	u0	(	.clken(iDVAL),
