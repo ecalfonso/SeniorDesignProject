@@ -114,7 +114,6 @@ wire [9:0] HPS_R;
 wire [9:0] HPS_G;
 wire [9:0] HPS_B;
 wire HPS_Capture_Start;	
-wire HPS_Capture_Stop;	
 wire HPS_CLK;
 //=======================================================
 //  Structural coding
@@ -160,8 +159,7 @@ begin
 end
 
 wire [9:0] VGADataIn;
-assign VGADataIn = (Read_DATA2[7:0] > SW[8:1]) ? 10'b1111111111 : 10'b0000000000;
-
+assign VGADataIn = Read_DATA2[0] ? 10'b1111111111 : 10'b0000000000;
 
 VGA_Controller		u1	(	//	Host Side
 							.oRequest(Read),				// Read Request is sent to the SDRAM when the VGA pixel scan is at the correct x and y pixel location in the active area
@@ -169,6 +167,10 @@ VGA_Controller		u1	(	//	Host Side
 							.iRed(VGADataIn),
 							.iGreen(VGADataIn),
 							.iBlue(VGADataIn ),
+							
+							//.iRed(Read_DATA2[9:0]),
+							//.iGreen(Read_DATA2[9:0]),
+							//.iBlue(Read_DATA2[9:0]),
 							
 							//	VGA Side
 							.oVGA_R(oVGA_R),
@@ -205,12 +207,33 @@ CCD_Capture			u3	(
 							.iCLK(CCD_PIXCLK),
 							.iRST(DLY_RST_2)
 						);
+/*				
+// Try to figure out ROWS and COLS pointers
+reg [31:0] row;
+reg [31:0] col;
+
+initial begin
+	row = 0;
+	col = 0;
+end
+
+always@(posedge X_Cont[0])
+begin
+	col <= col + 1;
+end
+
+always@(posedge Y_Cont[0])
+begin
+	row <= row + 1;
+end
+*/
 
 RAW2RGB				u4	(	
 							.iCLK(CCD_PIXCLK),
 							.iRST(DLY_RST_1),
 							.iDATA(mCCD_DATA),
 							.iDVAL(mCCD_DVAL),
+							.iThreshold(SW[8:1]),
 							.oRed(sCCD_R),
 							.oGreen(sCCD_G),
 							.oBlue(sCCD_B),
@@ -218,7 +241,7 @@ RAW2RGB				u4	(
 							.iX_Cont(X_Cont),
 							.iY_Cont(Y_Cont)
 						);
-
+/*
 wire [3:0] dig6;
 wire [3:0] dig5;
 wire [3:0] dig4;
@@ -235,6 +258,7 @@ SEG7_LUT_8 			u5	(
 							.oSEG5(HEX5),
 							.oSEG6(),
 							.oSEG7(),
+							//.iDIG(col)
 							.iDIG ({dig6, dig5, dig4, dig3, dig2, dig1})		// Show the proposed digits on the HEX displays
 						);
 						
@@ -247,6 +271,7 @@ bin2dec 					(
 							.Tens(dig2),
 							.Ones(dig1)
 						);
+						*/
 
 Sdram_Control_4Port	u7	(	
 							//	HOST Side
@@ -254,21 +279,25 @@ Sdram_Control_4Port	u7	(
 							.CLK(sdram_ctrl_clk),
 
 							//	FIFO Write Side 1
-							.WR1_DATA({1'b0,sCCD_G[11:7],sCCD_B[11:2]}),
+							//.WR1_DATA({1'b0,sCCD_G[11:7],sCCD_B[11:2]}),
+							.WR1_DATA({15'b000000000000000,sCCD_B[0]}),
 							.WR1(sCCD_DVAL),
 							.WR1_ADDR(0),					// Memory start for one section of the memory
 							.WR1_MAX_ADDR(640*480),
 							.WR1_LENGTH(256),
+							//.WR1_LENGTH(1),
 							.WR1_LOAD(!DLY_RST_0),
 							.WR1_CLK(~CCD_PIXCLK),		// This clock is directly from the CCD Camera Module, the Camera controls the write to memory
 							// CCD data is written on the falling edge of the CCD_PIXCLK
 
 							//	FIFO Write Side 2
-							.WR2_DATA(	{1'b0,sCCD_G[6:2],sCCD_R[11:2]}),
+							//.WR2_DATA(	{1'b0,sCCD_G[6:2],sCCD_R[11:2]}),
+							.WR2_DATA({15'b000000000000000,sCCD_R[0]}),
 							.WR2(sCCD_DVAL),
 							.WR2_ADDR(22'h100000),		// Memory start for the second section of memory - why can we not write data into one memory block?
 							.WR2_MAX_ADDR(22'h100000+640*480),
 							.WR2_LENGTH(256),
+							//.WR2_LENGTH(1),
 							.WR2_LOAD(!DLY_RST_0),
 							.WR2_CLK(~CCD_PIXCLK),
 
@@ -280,6 +309,7 @@ Sdram_Control_4Port	u7	(
 				        	.RD1_ADDR(0),
 							.RD1_MAX_ADDR(640*480),
 							.RD1_LENGTH(256),
+							//.RD1_LENGTH(1),
 							.RD1_LOAD(!DLY_RST_0),
 							//.RD1_CLK(~VGA_CTRL_CLK),
 							.RD1_CLK(reg_HPS_Clk),
@@ -290,6 +320,7 @@ Sdram_Control_4Port	u7	(
 							.RD2_ADDR(22'h100000), // Memory start address
 							.RD2_MAX_ADDR(22'h100000+640*480),	// Allocate enough space for whole 640 x 480 display
 							.RD2_LENGTH(256),	// 8 bits long data storage
+							//.RD2_LENGTH(1),
 				        	.RD2_LOAD(!DLY_RST_0),
 							.RD2_CLK(~VGA_CTRL_CLK),
 							
@@ -319,40 +350,15 @@ I2C_CCD_Config 		u8	(
 							.I2C_SDAT(GPIO_1[23])
 						);		
 	
-// Test register array
-reg [31:0] mem[7:0];
-reg [31:0] rowDataIn;
-wire [9:0] HPS_Row_Addr;
-integer x;
-
-initial
-begin
-	for (x = 0; x < 8; x = x + 1)
-	begin
-		mem[x] = x * 1000;
-	end
-end
-
-always@(posedge reg_HPS_Clk)
-begin
-	if (HPS_Col_Addr == 1'b0)	// Write
-	begin
-		mem[HPS_Row_Addr] <= HPS_Row_Addr;
-	end
-	else								// Read
-	begin
-		rowDataIn <= mem[HPS_Row_Addr];
-	end
-end
-	
 // Register for simulated HPS clock
 reg reg_HPS_Clk;	
 initial reg_HPS_Clk = 0;
 always@(HPS_CLK) reg_HPS_Clk <= HPS_CLK;
 
 // Wire that puts image data into HPS
-wire [7:0] imgDataIn;
-assign imgDataIn = (Read_DATA1[7:0] > SW[8:1]) ? 1 : 0;
+//wire imgDataIn;
+//assign imgDataIn = (Read_DATA1[7:0] > SW[8:1]) ? 1 : 0;
+//assign imgDataIn = Read_DATA1[0];
 
 wire [31:0] HPS_Digits;
 wire [9:0] HPS_State;
@@ -387,7 +393,8 @@ wire [9:0] HPS_State;
         .hps_clk_out_export       (HPS_CLK),       //         hps_clk_out.export
 		  //.verilog_ack_in_export    (reg_HPS_Clk[1]),    //      verilog_ack_in.export
 		  
-        .imgdata_in_export        (imgDataIn),        //          imgdata_in.export
+        //.imgdata_in_export        (imgDataIn),        //          imgdata_in.export
+		  .imgdata_in_export        (Read_DATA1[0]),        //          imgdata_in.export
         .row_data_in_export       (rowDataIn),       //         row_data_in.export
         //.col_data_in_export       (colDataIn),
 
