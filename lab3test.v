@@ -207,26 +207,6 @@ CCD_Capture			u3	(
 							.iCLK(CCD_PIXCLK),
 							.iRST(DLY_RST_2)
 						);
-/*				
-// Try to figure out ROWS and COLS pointers
-reg [31:0] row;
-reg [31:0] col;
-
-initial begin
-	row = 0;
-	col = 0;
-end
-
-always@(posedge X_Cont[0])
-begin
-	col <= col + 1;
-end
-
-always@(posedge Y_Cont[0])
-begin
-	row <= row + 1;
-end
-*/
 
 RAW2RGB				u4	(	
 							.iCLK(CCD_PIXCLK),
@@ -241,7 +221,7 @@ RAW2RGB				u4	(
 							.iX_Cont(X_Cont),
 							.iY_Cont(Y_Cont)
 						);
-/*
+
 wire [3:0] dig6;
 wire [3:0] dig5;
 wire [3:0] dig4;
@@ -258,7 +238,6 @@ SEG7_LUT_8 			u5	(
 							.oSEG5(HEX5),
 							.oSEG6(),
 							.oSEG7(),
-							//.iDIG(col)
 							.iDIG ({dig6, dig5, dig4, dig3, dig2, dig1})		// Show the proposed digits on the HEX displays
 						);
 						
@@ -271,7 +250,6 @@ bin2dec 					(
 							.Tens(dig2),
 							.Ones(dig1)
 						);
-						*/
 
 Sdram_Control_4Port	u7	(	
 							//	HOST Side
