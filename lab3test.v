@@ -250,6 +250,46 @@ bin2dec 					(
 							.Tens(dig2),
 							.Ones(dig1)
 						);
+						
+// Capture pixels in 8 registers to compress the image
+reg r0;
+reg r1;
+reg r2;
+reg r3;
+reg r4;
+reg r5;
+reg r6;
+reg r7;
+reg [2:0] shift_clk;
+
+initial 
+begin
+	r0 <= 0;
+	r1 <= 0;
+	r2 <= 0;
+	r3 <= 0;
+	r4 <= 0;
+	r5 <= 0;
+	r6 <= 0;
+	r7 <= 0;
+	shift_clk <= 4;
+end
+
+always@(posedge CCD_PIXCLK)
+begin
+	r6 <= r5;
+	r5 <= r4;
+	r4 <= r3;
+	r3 <= r2;
+	r2 <= r1;
+	r1 <= r0;
+	r0 <= sCCD_B[0];
+end
+
+always@(posedge ~CCD_PIXCLK)
+begin
+	shift_clk <= shift_clk + 1;
+end
 
 Sdram_Control_4Port	u7	(	
 							//	HOST Side
@@ -258,14 +298,15 @@ Sdram_Control_4Port	u7	(
 
 							//	FIFO Write Side 1
 							//.WR1_DATA({1'b0,sCCD_G[11:7],sCCD_B[11:2]}),
-							.WR1_DATA({15'b000000000000000,sCCD_B[0]}),
+							//.WR1_DATA({15'b000000000000000,sCCD_B[0]}),
+							.WR1_DATA({8'b00000000, sCCD_B[0], r0, r1, r2, r3, r4, r5, r6}),
 							.WR1(sCCD_DVAL),
 							.WR1_ADDR(0),					// Memory start for one section of the memory
 							.WR1_MAX_ADDR(640*480),
 							.WR1_LENGTH(256),
 							//.WR1_LENGTH(1),
 							.WR1_LOAD(!DLY_RST_0),
-							.WR1_CLK(~CCD_PIXCLK),		// This clock is directly from the CCD Camera Module, the Camera controls the write to memory
+							.WR1_CLK(shift_clk[2]),		// This clock is directly from the CCD Camera Module, the Camera controls the write to memory
 							// CCD data is written on the falling edge of the CCD_PIXCLK
 
 							//	FIFO Write Side 2
@@ -372,8 +413,15 @@ wire [9:0] HPS_State;
 		  //.verilog_ack_in_export    (reg_HPS_Clk[1]),    //      verilog_ack_in.export
 		  
         //.imgdata_in_export        (imgDataIn),        //          imgdata_in.export
-		  .imgdata_in_export        (Read_DATA1[0]),        //          imgdata_in.export
-        .row_data_in_export       (rowDataIn),       //         row_data_in.export
+		  .imgdata_in_0_export        (Read_DATA1[0]),        //          imgdata_in.export
+		  .imgdata_in_1_export      	(Read_DATA1[1]),      //        imgdata_in_1.export
+        .imgdata_in_2_export      	(Read_DATA1[2]),      //        imgdata_in_2.export
+        .imgdata_in_3_export      	(Read_DATA1[3]),      //        imgdata_in_3.export
+        .imgdata_in_4_export      	(Read_DATA1[4]),      //        imgdata_in_4.export
+        .imgdata_in_5_export      	(Read_DATA1[5]),      //        imgdata_in_5.export
+        .imgdata_in_6_export      	(Read_DATA1[6]),      //        imgdata_in_6.export
+        .imgdata_in_7_export      	(Read_DATA1[7]),       //        imgdata_in_7.export
+        .row_data_in_export       	(rowDataIn),       //         row_data_in.export
         //.col_data_in_export       (colDataIn),
 
         .row_addr_out_export      (HPS_Row_Addr),      //        row_addr_out.export
