@@ -6,24 +6,27 @@
 //#include "neural_network_float.h"		// Neural network 
 //#include "neural_network_double.h"		// Neural network 
 
+volatile int * oStart			= (int *) 0xFF200100;
 
-volatile int * oStart			= (int *) 0xFF200090;
+volatile int * oClock			= (int *) 0xFF200080;		// Increments counter register in verilog
 
-volatile int * oClock			= (int *) 0xFF200010;		// Increments counter register in verilog
+volatile int * iImgData0		= (int *) 0xFF2000D0;
+volatile int * iImgData1		= (int *) 0xFF200060;
+volatile int * iImgData2		= (int *) 0xFF200050;
+volatile int * iImgData3		= (int *) 0xFF200040;
+volatile int * iImgData4		= (int *) 0xFF200030;
+volatile int * iImgData5		= (int *) 0xFF200020;
+volatile int * iImgData6		= (int *) 0xFF200010;
+volatile int * iImgData7		= (int *) 0xFF200000;
 
-volatile int * iImgData			= (int *) 0xFF200060;
-volatile int * iRowData			= (int *) 0xFF200080;
-volatile int * iColData			= (int *) 0xFF200000;
+volatile int * iRowData			= (int *) 0xFF2000F0;
+volatile int * iColData			= (int *) 0xFF200070;
 
-volatile int * oRowAddr			= (int *) 0xFF200050;
-volatile int * oColCol			= (int *) 0xFF200020;
+volatile int * oRowAddr			= (int *) 0xFF2000C0;
+volatile int * oColAddr			= (int *) 0xFF200090;
 
-volatile int * oState			= (int *) 0xFF200030;		// Used to show the state with LEDs
-volatile int * oDigits			= (int *) 0xFF200040;		// Displays proposed digits to HEX modules
-
-
-
-//volatile int * DDR3			= (int *) 0x0010000; 	// Up to 0xFFF0000
+volatile int * oState			= (int *) 0xFF2000A0;		// Used to show the state with LEDs
+volatile int * oDigits			= (int *) 0xFF2000B0;		// Displays proposed digits to HEX modules
 
 void delay(int v)
 {
@@ -216,10 +219,17 @@ int main(void){
 			
 		for (rows = 0; rows < 480; rows++)	// 640x480
 		{	
-			for(cols = 0; cols < 640; cols++)
+			for(cols = 0; cols < 640/8; cols++)
 			{
 				Clock();
-				imgArr[rows][cols] = *iImgData;		// 0's and 1's are determined in verilog
+				imgArr[rows][8*cols] = *iImgData0;
+				imgArr[rows][8*cols+1] = *iImgData1;
+				imgArr[rows][8*cols+2] = *iImgData2;
+				imgArr[rows][8*cols+3] = *iImgData3;
+				imgArr[rows][8*cols+4] = *iImgData4;
+				imgArr[rows][8*cols+5] = *iImgData5;
+				imgArr[rows][8*cols+6] = *iImgData6;
+				imgArr[rows][8*cols+7] = *iImgData7;
 			}
 		}
 		

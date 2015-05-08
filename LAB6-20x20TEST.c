@@ -6,24 +6,27 @@
 #include "neural_network_float.h"		// Neural network 
 //#include "neural_network_double.h"		// Neural network 
 
+volatile int * oStart			= (int *) 0xFF200100;
 
-volatile int * oStart			= (int *) 0xFF200090;
+volatile int * oClock			= (int *) 0xFF200080;		// Increments counter register in verilog
 
-volatile int * oClock			= (int *) 0xFF200010;		// Increments counter register in verilog
+volatile int * iImgData0		= (int *) 0xFF2000D0;
+volatile int * iImgData1		= (int *) 0xFF200060;
+volatile int * iImgData2		= (int *) 0xFF200050;
+volatile int * iImgData3		= (int *) 0xFF200040;
+volatile int * iImgData4		= (int *) 0xFF200030;
+volatile int * iImgData5		= (int *) 0xFF200020;
+volatile int * iImgData6		= (int *) 0xFF200010;
+volatile int * iImgData6		= (int *) 0xFF200000;
 
-volatile int * iImgData			= (int *) 0xFF200060;
-volatile int * iRowData			= (int *) 0xFF200080;
-volatile int * iColData			= (int *) 0xFF200000;
+volatile int * iRowData			= (int *) 0xFF2000F0;
+volatile int * iColData			= (int *) 0xFF200070;
 
-volatile int * oRowAddr			= (int *) 0xFF200050;
-volatile int * oColCol			= (int *) 0xFF200020;
+volatile int * oRowAddr			= (int *) 0xFF2000C0;
+volatile int * oColAddr			= (int *) 0xFF200090;
 
-volatile int * oState			= (int *) 0xFF200030;		// Used to show the state with LEDs
-volatile int * oDigits			= (int *) 0xFF200040;		// Displays proposed digits to HEX modules
-
-
-
-//volatile int * DDR3			= (int *) 0x0010000; 	// Up to 0xFFF0000
+volatile int * oState			= (int *) 0xFF2000A0;		// Used to show the state with LEDs
+volatile int * oDigits			= (int *) 0xFF2000B0;		// Displays proposed digits to HEX modules
 
 void delay(int v)
 {
