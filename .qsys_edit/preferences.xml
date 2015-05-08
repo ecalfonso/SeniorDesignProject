@@ -5,9 +5,10 @@
   <columns>
    <connections preferredWidth="255" />
    <irq preferredWidth="47" />
-   <name preferredWidth="166" />
-   <inputclock preferredWidth="126" />
-   <export preferredWidth="233" />
+   <name preferredWidth="115" />
+   <inputclock preferredWidth="30" />
+   <export preferredWidth="79" />
+   <description preferredWidth="30" />
   </columns>
  </systemtable>
  <clocktable>

@@ -202,8 +202,8 @@ CCD_Capture			u3	(
 							.iDATA(rCCD_DATA),
 							.iFVAL(rCCD_FVAL),
 							.iLVAL(rCCD_LVAL),
-							.iSTART(!KEY[3]|HPS_Capture_Start),
-							.iEND(!KEY[2]|!HPS_Capture_Start),
+							.iSTART(HPS_Capture_Start),
+							.iEND(!HPS_Capture_Start),
 							.iCLK(CCD_PIXCLK),
 							.iRST(DLY_RST_2)
 						);
