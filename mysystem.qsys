@@ -56,7 +56,7 @@
    {
       datum _sortIndex
       {
-         value = "16";
+         value = "14";
          type = "int";
       }
    }
@@ -64,7 +64,7 @@
    {
       datum _sortIndex
       {
-         value = "17";
+         value = "15";
          type = "int";
       }
    }
@@ -72,7 +72,7 @@
    {
       datum _sortIndex
       {
-         value = "18";
+         value = "16";
          type = "int";
       }
    }
@@ -80,7 +80,7 @@
    {
       datum _sortIndex
       {
-         value = "19";
+         value = "17";
          type = "int";
       }
    }
@@ -88,7 +88,7 @@
    {
       datum _sortIndex
       {
-         value = "20";
+         value = "18";
          type = "int";
       }
    }
@@ -96,7 +96,7 @@
    {
       datum _sortIndex
       {
-         value = "21";
+         value = "19";
          type = "int";
       }
    }
@@ -104,7 +104,7 @@
    {
       datum _sortIndex
       {
-         value = "22";
+         value = "20";
          type = "int";
       }
    }
@@ -112,7 +112,7 @@
    {
       datum _sortIndex
       {
-         value = "23";
+         value = "21";
          type = "int";
       }
    }
@@ -148,14 +148,6 @@
          type = "String";
       }
    }
-   element customins_master_translator_0
-   {
-      datum _sortIndex
-      {
-         value = "14";
-         type = "int";
-      }
-   }
    element hps_0
    {
       datum _sortIndex
@@ -172,14 +164,6 @@
          type = "int";
       }
    }
-   element nios_custom_instr_floating_point_2_0
-   {
-      datum _sortIndex
-      {
-         value = "15";
-         type = "int";
-      }
-   }
    element onchip_memory2_0
    {
       datum _sortIndex
@@ -188,67 +172,11 @@
          type = "int";
       }
    }
-   element ImageData_5.s1
-   {
-      datum baseAddress
-      {
-         value = "32";
-         type = "String";
-      }
-   }
-   element RowData.s1
-   {
-      datum baseAddress
-      {
-         value = "240";
-         type = "String";
-      }
-   }
    element ImageData_1.s1
    {
       datum baseAddress
       {
          value = "96";
-         type = "String";
-      }
-   }
-   element ImageData_0.s1
-   {
-      datum baseAddress
-      {
-         value = "208";
-         type = "String";
-      }
-   }
-   element ColData.s1
-   {
-      datum baseAddress
-      {
-         value = "112";
-         type = "String";
-      }
-   }
-   element HPS_Digits.s1
-   {
-      datum baseAddress
-      {
-         value = "176";
-         type = "String";
-      }
-   }
-   element ImageData_4.s1
-   {
-      datum baseAddress
-      {
-         value = "48";
-         type = "String";
-      }
-   }
-   element ImageData_7.s1
-   {
-      datum baseAddress
-      {
-         value = "0";
          type = "String";
       }
    }
@@ -260,35 +188,11 @@
          type = "String";
       }
    }
-   element ImageData_2.s1
-   {
-      datum baseAddress
-      {
-         value = "80";
-         type = "String";
-      }
-   }
    element HPS_CLK.s1
    {
       datum baseAddress
       {
          value = "128";
-         type = "String";
-      }
-   }
-   element RowAddr.s1
-   {
-      datum baseAddress
-      {
-         value = "192";
-         type = "String";
-      }
-   }
-   element ColAddr.s1
-   {
-      datum baseAddress
-      {
-         value = "144";
          type = "String";
       }
    }
@@ -300,19 +204,43 @@
          type = "String";
       }
    }
-   element ImageData_6.s1
-   {
-      datum baseAddress
-      {
-         value = "16";
-         type = "String";
-      }
-   }
    element onchip_memory2_0.s1
    {
       datum baseAddress
       {
          value = "0";
+         type = "String";
+      }
+   }
+   element ImageData_4.s1
+   {
+      datum baseAddress
+      {
+         value = "48";
+         type = "String";
+      }
+   }
+   element HPS_State.s1
+   {
+      datum baseAddress
+      {
+         value = "160";
+         type = "String";
+      }
+   }
+   element RowAddr.s1
+   {
+      datum baseAddress
+      {
+         value = "192";
+         type = "String";
+      }
+   }
+   element ColData.s1
+   {
+      datum baseAddress
+      {
+         value = "112";
          type = "String";
       }
    }
@@ -324,11 +252,67 @@
          type = "String";
       }
    }
-   element HPS_State.s1
+   element ImageData_0.s1
    {
       datum baseAddress
       {
-         value = "160";
+         value = "208";
+         type = "String";
+      }
+   }
+   element HPS_Digits.s1
+   {
+      datum baseAddress
+      {
+         value = "176";
+         type = "String";
+      }
+   }
+   element ColAddr.s1
+   {
+      datum baseAddress
+      {
+         value = "144";
+         type = "String";
+      }
+   }
+   element RowData.s1
+   {
+      datum baseAddress
+      {
+         value = "240";
+         type = "String";
+      }
+   }
+   element ImageData_7.s1
+   {
+      datum baseAddress
+      {
+         value = "0";
+         type = "String";
+      }
+   }
+   element ImageData_2.s1
+   {
+      datum baseAddress
+      {
+         value = "80";
+         type = "String";
+      }
+   }
+   element ImageData_5.s1
+   {
+      datum baseAddress
+      {
+         value = "32";
+         type = "String";
+      }
+   }
+   element ImageData_6.s1
+   {
+      datum baseAddress
+      {
+         value = "16";
          type = "String";
       }
    }
@@ -1378,40 +1362,6 @@
   <parameter name="clockRate" value="50000000" />
  </module>
  <module
-   kind="altera_nios_custom_instr_floating_point_2"
-   version="100.99.98.97"
-   enabled="1"
-   name="nios_custom_instr_floating_point_2_0">
-  <parameter name="AUTO_DEVICE_FAMILY" value="Cyclone V" />
-  <parameter name="AUTO_DEVICE" value="5CSEMA5F31C6" />
- </module>
- <module
-   kind="altera_customins_master_translator"
-   version="13.1"
-   enabled="1"
-   name="customins_master_translator_0">
-  <parameter name="USE_DATAA" value="1" />
-  <parameter name="USE_DATAB" value="1" />
-  <parameter name="USE_N" value="1" />
-  <parameter name="USE_READRA" value="1" />
-  <parameter name="USE_READRB" value="1" />
-  <parameter name="USE_WRITERC" value="1" />
-  <parameter name="USE_IPENDING" value="1" />
-  <parameter name="USE_ESTATUS" value="1" />
-  <parameter name="ENABLE_MULTICYCLE" value="1" />
-  <parameter name="USE_START" value="1" />
-  <parameter name="USE_DONE" value="1" />
-  <parameter name="USE_MULTI_DATAA" value="1" />
-  <parameter name="USE_MULTI_DATAB" value="1" />
-  <parameter name="USE_MULTI_RESULT" value="1" />
-  <parameter name="USE_MULTI_N" value="1" />
-  <parameter name="USE_MULTI_READRA" value="1" />
-  <parameter name="USE_MULTI_READRB" value="1" />
-  <parameter name="USE_MULTI_WRITERC" value="1" />
-  <parameter name="SHARED_COMB_AND_MULTI" value="0" />
-  <parameter name="AUTO_DEVICE_FAMILY" value="Cyclone V" />
- </module>
- <module
    kind="altera_avalon_pio"
    version="13.1"
    enabled="1"
@@ -1846,60 +1796,6 @@
    version="13.1"
    start="sys_sdram_pll_0.reset_source"
    end="ColData.reset" />
- <connection
-   kind="nios_custom_instruction"
-   version="13.1"
-   start="customins_master_translator_0.comb_ci_master"
-   end="nios_custom_instr_floating_point_2_0.s2">
-  <parameter name="CIName">nios_custom_instr_floating_point_2_0</parameter>
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="248" />
- </connection>
- <connection
-   kind="nios_custom_instruction"
-   version="13.1"
-   start="customins_master_translator_0.comb_ci_master"
-   end="nios_custom_instr_floating_point_2_0.s1">
-  <parameter name="CIName">nios_custom_instr_floating_point_2_0_1</parameter>
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="224" />
- </connection>
- <connection
-   kind="nios_custom_instruction"
-   version="13.1"
-   start="customins_master_translator_0.multi_ci_master"
-   end="nios_custom_instr_floating_point_2_0.s1">
-  <parameter name="CIName">nios_custom_instr_floating_point_2_0_2</parameter>
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="224" />
- </connection>
- <connection
-   kind="nios_custom_instruction"
-   version="13.1"
-   start="customins_master_translator_0.multi_ci_master"
-   end="nios_custom_instr_floating_point_2_0.s2">
-  <parameter name="CIName">nios_custom_instr_floating_point_2_0_3</parameter>
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="248" />
- </connection>
- <connection
-   kind="nios_custom_instruction"
-   version="13.1"
-   start="customins_master_translator_0.comb_ci_master"
-   end="customins_master_translator_0.ci_slave">
-  <parameter name="CIName">customins_master_translator_0</parameter>
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0" />
- </connection>
- <connection
-   kind="nios_custom_instruction"
-   version="13.1"
-   start="customins_master_translator_0.multi_ci_master"
-   end="customins_master_translator_0.ci_slave">
-  <parameter name="CIName">customins_master_translator_0_1</parameter>
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0" />
- </connection>
  <connection
    kind="reset"
    version="13.1"

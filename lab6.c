@@ -216,7 +216,8 @@ int main(void){
 		*oState = 3;				// State 2 - Reading image
 		
 		if (RECORD_TIME) time = getCycles();
-			
+		
+		/*	
 		for (rows = 0; rows < 480; rows++)	// 640x480
 		{	
 			for(cols = 0; cols < 640/8; cols++)
@@ -231,6 +232,17 @@ int main(void){
 				imgArr[rows][8*cols+6] = *iImgData6;
 				imgArr[rows][8*cols+7] = *iImgData7;
 			}
+		}
+		*/
+		
+		for (rows = 0; rows < 480; rows++)	// 640x480
+		{	
+			for(cols = 0; cols < 640; cols++)
+			{
+				Clock();
+				printf("%d ", *iRowData);
+			}
+			printf("\n");
 		}
 		
 		if (RECORD_TIME) printf("Time to extract image: %d cycles\n", getCycles() - time);

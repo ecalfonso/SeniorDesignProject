@@ -238,7 +238,8 @@ SEG7_LUT_8 			u5	(
 							.oSEG5(HEX5),
 							.oSEG6(),
 							.oSEG7(),
-							.iDIG ({dig6, dig5, dig4, dig3, dig2, dig1})		// Show the proposed digits on the HEX displays
+							.iDIG(Read_DATA1)
+							//.iDIG ({dig6, dig5, dig4, dig3, dig2, dig1})		// Show the proposed digits on the HEX displays
 						);
 						
 bin2dec 					(
@@ -252,39 +253,22 @@ bin2dec 					(
 						);
 						
 // Capture pixels in 8 registers to compress the image
-reg r0;
-reg r1;
-reg r2;
-reg r3;
-reg r4;
-reg r5;
-reg r6;
-reg r7;
+reg [7:0] shift;
 reg [2:0] shift_clk;
+wire [7:0] shift_wire;
 
 initial 
 begin
-	r0 <= 0;
-	r1 <= 0;
-	r2 <= 0;
-	r3 <= 0;
-	r4 <= 0;
-	r5 <= 0;
-	r6 <= 0;
-	r7 <= 0;
+	shift <= 0;
 	shift_clk <= 4;
 end
 
 always@(posedge CCD_PIXCLK)
 begin
-	r6 <= r5;
-	r5 <= r4;
-	r4 <= r3;
-	r3 <= r2;
-	r2 <= r1;
-	r1 <= r0;
-	r0 <= sCCD_B[0];
+	shift <= {shift[6:0],sCCD_B[0]};
 end
+
+assign shift_wire = {shift[6:0], sCCD_B[0]};
 
 always@(posedge ~CCD_PIXCLK)
 begin
@@ -299,7 +283,7 @@ Sdram_Control_4Port	u7	(
 							//	FIFO Write Side 1
 							//.WR1_DATA({1'b0,sCCD_G[11:7],sCCD_B[11:2]}),
 							//.WR1_DATA({15'b000000000000000,sCCD_B[0]}),
-							.WR1_DATA({8'b00000000, sCCD_B[0], r0, r1, r2, r3, r4, r5, r6}),
+							.WR1_DATA({8'b00000000, shift_wire}),
 							.WR1(sCCD_DVAL),
 							.WR1_ADDR(0),					// Memory start for one section of the memory
 							.WR1_MAX_ADDR(640*480),
@@ -421,7 +405,7 @@ wire [9:0] HPS_State;
         .imgdata_in_5_export      	(Read_DATA1[5]),      //        imgdata_in_5.export
         .imgdata_in_6_export      	(Read_DATA1[6]),      //        imgdata_in_6.export
         .imgdata_in_7_export      	(Read_DATA1[7]),       //        imgdata_in_7.export
-        .row_data_in_export       	(rowDataIn),       //         row_data_in.export
+        .row_data_in_export       	(Read_DATA1[7:0]),       //         row_data_in.export
         //.col_data_in_export       (colDataIn),
 
         .row_addr_out_export      (HPS_Row_Addr),      //        row_addr_out.export
