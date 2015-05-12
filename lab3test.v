@@ -84,6 +84,7 @@ wire			CCD_MCLK;				//	CCD Master Clock
 
 wire		[15:0]	Read_DATA1;
 wire		[15:0]	Read_DATA2;
+wire		[15:0]	Read_DATA3;
 wire					VGA_CTRL_CLK;
 wire		[11:0]	mCCD_DATA;
 wire					mCCD_DVAL;
@@ -282,8 +283,8 @@ Sdram_Control_4Port	u7	(
 
 							//	FIFO Write Side 1
 							//.WR1_DATA({1'b0,sCCD_G[11:7],sCCD_B[11:2]}),
-							//.WR1_DATA({15'b000000000000000,sCCD_B[0]}),
-							.WR1_DATA({8'b00000000, shift_wire}),
+							.WR1_DATA({15'b000000000000000,sCCD_B[0]}),
+							//.WR1_DATA({8'b00000000, shift_wire}),
 							.WR1(sCCD_DVAL),
 							.WR1_ADDR(0),					// Memory start for one section of the memory
 							.WR1_MAX_ADDR(640*480),
@@ -326,6 +327,18 @@ Sdram_Control_4Port	u7	(
 							//.RD2_LENGTH(1),
 				        	.RD2_LOAD(!DLY_RST_0),
 							.RD2_CLK(~VGA_CTRL_CLK),
+							
+							//	FIFO Read Side 3
+						   .RD3_DATA(Read_DATA3),
+				        	//.RD3(Read),
+							.RD3(1),			// Always ready since we control the clock
+				        	.RD3_ADDR(640*480/2),
+							.RD3_MAX_ADDR(640*480),
+							.RD3_LENGTH(256),
+							//.RD3_LENGTH(1),
+							.RD3_LOAD(!DLY_RST_0),
+							//.RD3_CLK(~VGA_CTRL_CLK),
+							//.RD3_CLK(reg_HPS_Clk),
 							
 							//	SDRAM Side - Initialize the SDRAM - Can only initialize one per design
 							// Qsys does not allow the allocation of more than one SDRAM connected to the same DE1-SOC DRAM pin
@@ -398,7 +411,7 @@ wire [9:0] HPS_State;
 		  
         //.imgdata_in_export        (imgDataIn),        //          imgdata_in.export
 		  .imgdata_in_0_export        (Read_DATA1[0]),        //          imgdata_in.export
-		  .imgdata_in_1_export      	(Read_DATA1[1]),      //        imgdata_in_1.export
+		  .imgdata_in_1_export      	(Read_DATA3[0]),      //        imgdata_in_1.export
         .imgdata_in_2_export      	(Read_DATA1[2]),      //        imgdata_in_2.export
         .imgdata_in_3_export      	(Read_DATA1[3]),      //        imgdata_in_3.export
         .imgdata_in_4_export      	(Read_DATA1[4]),      //        imgdata_in_4.export

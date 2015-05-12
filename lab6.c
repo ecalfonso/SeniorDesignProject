@@ -240,9 +240,9 @@ int main(void){
 			for(cols = 0; cols < 640; cols++)
 			{
 				Clock();
-				printf("%d ", *iRowData);
+				imgArr[rows][cols] = *iImgData0;
+				//imgArr[240+rows][cols] = *iImgData1;
 			}
-			printf("\n");
 		}
 		
 		if (RECORD_TIME) printf("Time to extract image: %d cycles\n", getCycles() - time);

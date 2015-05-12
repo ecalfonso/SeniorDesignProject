@@ -45,6 +45,16 @@ module Sdram_Control_4Port(
 		RD2_CLK,
 		RD2_EMPTY,
 		RD2_USE,
+		//	FIFO Read Side 2
+        RD3_DATA,
+		RD3,
+		RD3_ADDR,
+		RD3_MAX_ADDR,
+		RD3_LENGTH,
+		RD3_LOAD,
+		RD3_CLK,
+		RD3_EMPTY,
+		RD3_USE,
 		//	SDRAM Side
         SA,
         BA,
@@ -103,6 +113,16 @@ input							RD2_LOAD;				//Read register load & fifo clear
 input							RD2_CLK;				//Read fifo clock
 output							RD2_EMPTY;				//Read fifo empty
 output	[8:0]					RD2_USE;				//Read fifo usedw
+//	FIFO Read Side 3
+output  [`DSIZE-1:0]            RD3_DATA;               //Data output
+input							RD3;					//Read Request
+input	[`ASIZE-1:0]			RD3_ADDR;				//Read start address
+input	[`ASIZE-1:0]			RD3_MAX_ADDR;			//Read max address
+input	[8:0]					RD3_LENGTH;				//Read length
+input							RD3_LOAD;				//Read register load & fifo clear
+input							RD3_CLK;				//Read fifo clock
+output							RD3_EMPTY;				//Read fifo empty
+output	[8:0]					RD3_USE;				//Read fifo usedw
 //	SDRAM Side
 output  [11:0]                  SA;                     //SDRAM address output
 output  [1:0]                   BA;                     //SDRAM bank address
@@ -130,8 +150,11 @@ reg		[8:0]					rRD1_LENGTH;			//Register read length
 reg		[`ASIZE-1:0]			rRD2_ADDR;				//Register read address
 reg		[`ASIZE-1:0]			rRD2_MAX_ADDR;			//Register max read address
 reg		[8:0]					rRD2_LENGTH;			//Register read length
+reg		[`ASIZE-1:0]			rRD3_ADDR;				//Register read address
+reg		[`ASIZE-1:0]			rRD3_MAX_ADDR;			//Register max read address
+reg		[8:0]					rRD3_LENGTH;			//Register read length
 reg		[1:0]					WR_MASK;				//Write port active mask
-reg		[1:0]					RD_MASK;				//Read port active mask
+reg		[2:0]					RD_MASK;				//Read port active mask
 reg								mWR_DONE;				//Flag write done, 1 pulse SDR_CLK
 reg								mRD_DONE;				//Flag read done, 1 pulse SDR_CLK
 reg								mWR,Pre_WR;				//Internal WR edge capture
@@ -172,6 +195,7 @@ wire	[8:0]					write_side_fifo_rusedw1;
 wire	[8:0]					read_side_fifo_wusedw1;
 wire	[8:0]					write_side_fifo_rusedw2;
 wire	[8:0]					read_side_fifo_wusedw2;
+wire	[8:0]					read_side_fifo_wusedw3;
 //	DRAM Internal Control
 wire    [`ASIZE-1:0]            saddr;
 wire                            load_mode;
@@ -297,6 +321,19 @@ Sdram_FIFO 	read_fifo2(
 				.rdempty(RD2_EMPTY),
 				.rdusedw(RD2_USE)
 				);
+				
+Sdram_FIFO 	read_fifo3(
+				.data(mDATAOUT),
+				.wrreq(OUT_VALID&RD_MASK[2]),
+				.wrclk(CLK),
+				.aclr(RD3_LOAD),
+				.rdreq(RD3),
+				.rdclk(RD3_CLK),
+				.q(RD3_DATA),
+				.wrusedw(read_side_fifo_wusedw3),
+				.rdempty(RD3_EMPTY),
+				.rdusedw(RD3_USE)
+				);
 
 always @(posedge CLK)
 begin
@@ -404,22 +441,21 @@ always@(posedge CLK or negedge RESET_N)
 begin
 	if(!RESET_N)
 	begin
-		rWR1_ADDR		<=	0;
-		rWR2_ADDR		<=	22'h100000;
-		rRD1_ADDR		<=	0;
-		rRD2_ADDR		<=	22'h100000;
-		rWR1_MAX_ADDR	<=	640*480;
-		rWR2_MAX_ADDR	<=	22'h100000+640*480;
-		rRD1_MAX_ADDR	<=	640*480;
-		rRD2_MAX_ADDR	<=	22'h100000+640*480;
-		//rWR1_LENGTH		<=	256;
-		//rWR2_LENGTH		<=	256;
-		//rRD1_LENGTH		<=	256;
-		//rRD2_LENGTH		<=	256;
-		rWR1_LENGTH		<=	WR1_LENGTH;
-		rWR2_LENGTH		<=	WR2_LENGTH;
-		rRD1_LENGTH		<=	RD1_LENGTH;
-		rRD2_LENGTH		<=	RD2_LENGTH;
+		rWR1_ADDR		<=	WR1_ADDR; 			// 0;
+		rWR2_ADDR		<=	WR2_ADDR;			// 22'h100000;
+		rRD1_ADDR		<=	RD1_ADDR;				// 0;
+		rRD2_ADDR		<=	RD2_ADDR;				// 22'h100000;
+		rRD3_ADDR		<=	RD3_ADDR;				// 640*480/2;
+		rWR1_MAX_ADDR	<=	WR1_MAX_ADDR;		// 640*480;
+		rWR2_MAX_ADDR	<=	WR2_MAX_ADDR;		// 22'h100000+640*480;
+		rRD1_MAX_ADDR	<=	RD1_MAX_ADDR;		// 640*480/2-1;
+		rRD2_MAX_ADDR	<=	RD2_MAX_ADDR;		// 22'h100000+640*480;
+		rRD3_MAX_ADDR	<=	RD3_MAX_ADDR;		// 640*480;
+		rWR1_LENGTH		<=	WR1_LENGTH;			// 256;
+		rWR2_LENGTH		<=	WR2_LENGTH;			// 256;
+		rRD1_LENGTH		<=	RD1_LENGTH;			// 256;
+		rRD2_LENGTH		<=	RD2_LENGTH;			// 256;
+		rRD3_LENGTH		<=	RD3_LENGTH;			// 256;
 	end
 	else
 	begin
@@ -475,6 +511,19 @@ begin
 			else
 				rRD2_ADDR	<=	RD2_ADDR;
 		end
+		//	Read Side 3
+		if(RD3_LOAD)
+		begin
+			rRD3_ADDR	<=	RD3_ADDR;
+			rRD3_LENGTH	<=	RD3_LENGTH;
+		end
+		else if(mRD_DONE&RD_MASK[2])
+		begin
+			if(rRD3_ADDR<rRD2_MAX_ADDR-rRD3_LENGTH)
+				rRD3_ADDR	<=	rRD3_ADDR+rRD3_LENGTH;
+			else
+				rRD3_ADDR	<=	RD3_ADDR;
+		end
 	end
 end
 //	Auto Read/Write Control
@@ -500,7 +549,7 @@ begin
 				mADDR	<=	rWR1_ADDR;
 				mLENGTH	<=	rWR1_LENGTH;
 				WR_MASK	<=	2'b01;
-				RD_MASK	<=	2'b00;
+				RD_MASK	<=	3'b000;
 				mWR		<=	1;
 				mRD		<=	0;
 			end
@@ -510,7 +559,7 @@ begin
 				mADDR	<=	rWR2_ADDR;
 				mLENGTH	<=	rWR2_LENGTH;
 				WR_MASK	<=	2'b10;
-				RD_MASK	<=	2'b00;
+				RD_MASK	<=	3'b000;
 				mWR		<=	1;
 				mRD		<=	0;
 			end
@@ -520,7 +569,7 @@ begin
 				mADDR	<=	rRD1_ADDR;
 				mLENGTH	<=	rRD1_LENGTH;
 				WR_MASK	<=	2'b00;
-				RD_MASK	<=	2'b01;
+				RD_MASK	<=	3'b001;
 				mWR		<=	0;
 				mRD		<=	1;				
 			end
@@ -530,7 +579,17 @@ begin
 				mADDR	<=	rRD2_ADDR;
 				mLENGTH	<=	rRD2_LENGTH;
 				WR_MASK	<=	2'b00;
-				RD_MASK	<=	2'b10;
+				RD_MASK	<=	3'b010;
+				mWR		<=	0;
+				mRD		<=	1;
+			end
+			//	Read Side 3
+			else if( (read_side_fifo_wusedw3 < rRD3_LENGTH) )
+			begin
+				mADDR	<=	rRD3_ADDR;
+				mLENGTH	<=	rRD3_LENGTH;
+				WR_MASK	<=	2'b00;
+				RD_MASK	<=	3'b100;
 				mWR		<=	0;
 				mRD		<=	1;
 			end
