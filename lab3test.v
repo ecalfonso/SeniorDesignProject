@@ -145,7 +145,8 @@ always@(posedge CLOCK_50)	rClk	<=	~rClk;
 
 assign CCD_MCLK = rClk[0]; // 25MHZ
 
-assign LEDR			= HPS_State;	// Use LEDs to show curret state of HPS during processing
+//assign LEDR			= HPS_State;	// Use LEDs to show curret state of HPS during processing
+assign LEDR			= Read_DATA1;
 
 assign	VGA_R		=	oVGA_R[9:2];
 assign	VGA_G		=	oVGA_G[9:2];
@@ -405,7 +406,7 @@ wire [9:0] HPS_State;
         .imgdata_in_5_export      	(Read_DATA1[5]),      //        imgdata_in_5.export
         .imgdata_in_6_export      	(Read_DATA1[6]),      //        imgdata_in_6.export
         .imgdata_in_7_export      	(Read_DATA1[7]),       //        imgdata_in_7.export
-        .row_data_in_export       	(Read_DATA1[7:0]),       //         row_data_in.export
+        .row_data_in_export       	(Read_DATA1),       //         row_data_in.export
         //.col_data_in_export       (colDataIn),
 
         .row_addr_out_export      (HPS_Row_Addr),      //        row_addr_out.export

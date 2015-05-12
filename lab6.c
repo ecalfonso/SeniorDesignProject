@@ -251,7 +251,7 @@ int main(void){
 		*oStart = 1;
 		
 		// Debug print loop
-		///*
+		/*
 		printf("Printing out full image array with buffers\n");
 		for (rows = 48; rows < 432; rows++)	// 640x480
 		{
@@ -264,7 +264,7 @@ int main(void){
 			}
 			printf("\n");
 		}
-		//*/
+		*/
 		
 	} // While(1)
 	
