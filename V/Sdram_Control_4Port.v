@@ -404,22 +404,18 @@ always@(posedge CLK or negedge RESET_N)
 begin
 	if(!RESET_N)
 	begin
-		rWR1_ADDR		<=	0;
-		rWR2_ADDR		<=	22'h100000;
-		rRD1_ADDR		<=	0;
-		rRD2_ADDR		<=	22'h100000;
-		rWR1_MAX_ADDR	<=	640*480;
-		rWR2_MAX_ADDR	<=	22'h100000+640*480;
-		rRD1_MAX_ADDR	<=	640*480;
-		rRD2_MAX_ADDR	<=	22'h100000+640*480;
-		//rWR1_LENGTH		<=	256;
-		//rWR2_LENGTH		<=	256;
-		//rRD1_LENGTH		<=	256;
-		//rRD2_LENGTH		<=	256;
-		rWR1_LENGTH		<=	WR1_LENGTH;
-		rWR2_LENGTH		<=	WR2_LENGTH;
-		rRD1_LENGTH		<=	RD1_LENGTH;
-		rRD2_LENGTH		<=	RD2_LENGTH;
+		rWR1_ADDR		<=	WR1_ADDR;			// 0;
+		rWR2_ADDR		<=	WR2_ADDR;			// 22'h100000;
+		rRD1_ADDR		<=	RD1_ADDR;			// 0;
+		rRD2_ADDR		<=	RD2_ADDR;			// 22'h100000;
+		rWR1_MAX_ADDR	<=	WR1_MAX_ADDR;		// 640*480;
+		rWR2_MAX_ADDR	<=	WR2_MAX_ADDR;		// 22'h100000+640*480;
+		rRD1_MAX_ADDR	<=	RD1_MAX_ADDR;		// 640*480;
+		rRD2_MAX_ADDR	<=	RD2_MAX_ADDR;		// 22'h100000+640*480;
+		rWR1_LENGTH		<=	WR1_LENGTH;			// 256;
+		rWR2_LENGTH		<=	WR2_LENGTH;    	// 256;
+		rRD1_LENGTH		<=	RD1_LENGTH;    	// 256;
+		rRD2_LENGTH		<=	RD2_LENGTH;    	// 256;
 	end
 	else
 	begin

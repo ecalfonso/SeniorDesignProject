@@ -146,7 +146,7 @@ always@(posedge CLOCK_50)	rClk	<=	~rClk;
 assign CCD_MCLK = rClk[0]; // 25MHZ
 
 //assign LEDR			= HPS_State;	// Use LEDs to show curret state of HPS during processing
-assign LEDR			= Read_DATA1;
+assign LEDR			= shift_wire;
 
 assign	VGA_R		=	oVGA_R[9:2];
 assign	VGA_G		=	oVGA_G[9:2];
@@ -254,22 +254,23 @@ bin2dec 					(
 						);
 						
 // Capture pixels in 8 registers to compress the image
-reg [7:0] shift;
-reg [2:0] shift_clk;
-wire [7:0] shift_wire;
+reg [15:0] shift;
+reg [3:0] shift_clk;
+wire [15:0] shift_wire;
 
 initial 
 begin
 	shift <= 0;
-	shift_clk <= 4;
+	//shift_clk <= 4'b1000;	// 8
+	shift_clk <= 4'b0100;	// 4
 end
 
 always@(posedge CCD_PIXCLK)
 begin
-	shift <= {shift[6:0],sCCD_B[0]};
+	shift <= {sCCD_B[0],shift[15:1]};
 end
 
-assign shift_wire = {shift[6:0], sCCD_B[0]};
+assign shift_wire = {sCCD_B[0],shift[15:1]};
 
 always@(posedge ~CCD_PIXCLK)
 begin
@@ -284,14 +285,14 @@ Sdram_Control_4Port	u7	(
 							//	FIFO Write Side 1
 							//.WR1_DATA({1'b0,sCCD_G[11:7],sCCD_B[11:2]}),
 							//.WR1_DATA({15'b000000000000000,sCCD_B[0]}),
-							.WR1_DATA({8'b00000000, shift_wire}),
+							.WR1_DATA(shift_wire),
 							.WR1(sCCD_DVAL),
 							.WR1_ADDR(0),					// Memory start for one section of the memory
-							.WR1_MAX_ADDR(640*480),
+							.WR1_MAX_ADDR(640*480/8),
 							.WR1_LENGTH(256),
 							//.WR1_LENGTH(1),
 							.WR1_LOAD(!DLY_RST_0),
-							.WR1_CLK(shift_clk[2]),		// This clock is directly from the CCD Camera Module, the Camera controls the write to memory
+							.WR1_CLK(shift_clk[3]),		// This clock is directly from the CCD Camera Module, the Camera controls the write to memory
 							// CCD data is written on the falling edge of the CCD_PIXCLK
 
 							//	FIFO Write Side 2
@@ -304,7 +305,6 @@ Sdram_Control_4Port	u7	(
 							//.WR2_LENGTH(1),
 							.WR2_LOAD(!DLY_RST_0),
 							.WR2_CLK(~CCD_PIXCLK),
-
 
 							//	FIFO Read Side 1
 						   .RD1_DATA(Read_DATA1),
@@ -406,6 +406,14 @@ wire [9:0] HPS_State;
         .imgdata_in_5_export      	(Read_DATA1[5]),      //        imgdata_in_5.export
         .imgdata_in_6_export      	(Read_DATA1[6]),      //        imgdata_in_6.export
         .imgdata_in_7_export      	(Read_DATA1[7]),       //        imgdata_in_7.export
+		  .imgdata_in_8_export      	(Read_DATA1[8]),      //        imgdata_in_8.export
+        .imgdata_in_9_export      	(Read_DATA1[9]),      //        imgdata_in_9.export
+        .imgdata_in_10_export     	(Read_DATA1[10]),     //       imgdata_in_10.export
+        .imgdata_in_11_export     	(Read_DATA1[11]),     //       imgdata_in_11.export
+        .imgdata_in_12_export     	(Read_DATA1[12]),     //       imgdata_in_12.export
+        .imgdata_in_13_export     	(Read_DATA1[13]),     //       imgdata_in_13.export
+        .imgdata_in_14_export     	(Read_DATA1[14]),     //       imgdata_in_14.export
+        .imgdata_in_15_export     	(Read_DATA1[15]),      //       imgdata_in_15.export
         .row_data_in_export       	(Read_DATA1),       //         row_data_in.export
         //.col_data_in_export       (colDataIn),
 

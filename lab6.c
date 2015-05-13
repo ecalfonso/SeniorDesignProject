@@ -6,27 +6,35 @@
 //#include "neural_network_float.h"		// Neural network 
 //#include "neural_network_double.h"		// Neural network 
 
-volatile int * oStart			= (int *) 0xFF200100;
+volatile int * oStart			= (int *) 0xFF200180;
 
-volatile int * oClock			= (int *) 0xFF200080;		// Increments counter register in verilog
+volatile int * oClock			= (int *) 0xFF200100;		// Increments counter register in verilog
 
-volatile int * iImgData0		= (int *) 0xFF2000D0;
-volatile int * iImgData1		= (int *) 0xFF200060;
-volatile int * iImgData2		= (int *) 0xFF200050;
-volatile int * iImgData3		= (int *) 0xFF200040;
-volatile int * iImgData4		= (int *) 0xFF200030;
-volatile int * iImgData5		= (int *) 0xFF200020;
-volatile int * iImgData6		= (int *) 0xFF200010;
-volatile int * iImgData7		= (int *) 0xFF200000;
+volatile int * iImgData0		= (int *) 0xFF200150;
+volatile int * iImgData1		= (int *) 0xFF2000E0;
+volatile int * iImgData2		= (int *) 0xFF2000D0;
+volatile int * iImgData3		= (int *) 0xFF2000C0;
+volatile int * iImgData4		= (int *) 0xFF2000B0;
+volatile int * iImgData5		= (int *) 0xFF2000A0;
+volatile int * iImgData6		= (int *) 0xFF200090;
+volatile int * iImgData7		= (int *) 0xFF200080;
+volatile int * iImgData8		= (int *) 0xFF200000;
+volatile int * iImgData9		= (int *) 0xFF200070;
+volatile int * iImgData10		= (int *) 0xFF200060;
+volatile int * iImgData11		= (int *) 0xFF200050;
+volatile int * iImgData12		= (int *) 0xFF200040;
+volatile int * iImgData13		= (int *) 0xFF200030;
+volatile int * iImgData14		= (int *) 0xFF200020;
+volatile int * iImgData15		= (int *) 0xFF200010;
 
-volatile int * iRowData			= (int *) 0xFF2000F0;
-volatile int * iColData			= (int *) 0xFF200070;
+volatile int * iRowData			= (int *) 0xFF200170;
+volatile int * iColData			= (int *) 0xFF2000F0;
 
-volatile int * oRowAddr			= (int *) 0xFF2000C0;
-volatile int * oColAddr			= (int *) 0xFF200090;
+volatile int * oRowAddr			= (int *) 0xFF200140;
+volatile int * oColAddr			= (int *) 0xFF200110;
 
-volatile int * oState			= (int *) 0xFF2000A0;		// Used to show the state with LEDs
-volatile int * oDigits			= (int *) 0xFF2000B0;		// Displays proposed digits to HEX modules
+volatile int * oState			= (int *) 0xFF200120;		// Used to show the state with LEDs
+volatile int * oDigits			= (int *) 0xFF200130;		// Displays proposed digits to HEX modules
 
 void delay(int v)
 {
@@ -108,46 +116,6 @@ int main(void){
 	// Loop indexes
 	int rows, cols;					
 	int i, j, k, x, y;
-
-	// ROI variables
-	int rowsSumArr[480] = { 0 };	// Holds summation of all rows
-	int colsSumArr[640] = { 0 };	// Holds summation of all cols
-	
-	int rowsSumMax = 0;			// These holds values for the light level
-	int colsSumMax = 0;
-	int rowsLevel = 0;
-	int colsLevel = 0;
-	
-	int binaryRowsSumArr[480] = { 0 };	// We transform these values into binary values
-	int binaryColsSumArr[640] = { 0 };	//    according to the calculated level
-	
-	int projTop = 0, projBottom = 0;	// Row/col indexes for projector space
-	int projLeft = 0, projRight = 0;
-	
-	int roiTop = 0, roiBottom = 0;		// Row/col indexes for ROI
-	int roiLeft = 0, roiRight = 0;
-	
-	// Segmentation and Resize variables
-	int numDigits = 0;
-	int currentDigit = 0;
-	int digitWidth = 0;
-	int digitHeight = 0;
-	int segmentIntensity = 0;			// Accumulator to check if the segment isn't all white pixels
-	//int digitArr[784] = { 0 };
-	int digitArr[400] = { 0 };
-	
-	
-	// Neural network variables
-	float sum;
-	float Z1[200];
-	float Z2[200];
-	int max = 0;
-	int pos = 0;
-	
-	int answer = 0;
-	
-	// TESTING VARIABLE
-	int temp;
 	
 	// Timing variables
 	int RECORD_TIME = 0;				// Variable that decides if we print (1) or not (0)
@@ -167,16 +135,6 @@ int main(void){
 
 	while(1)
 	{
-		// -----------------------------------------------------------------------------------
-		// 
-		// Reset the variables for next iteration
-		//
-		// -----------------------------------------------------------------------------------
-		for (i = 0; i < 640; i++) colsSumArr[i] = 0;
-		for (i = 0; i < 480; i++) rowsSumArr[i] = 0;
-		
-		max = -100000000;
-		answer = 0;
 		
 		// -----------------------------------------------------------------------------------
 		// 
@@ -217,7 +175,7 @@ int main(void){
 		
 		if (RECORD_TIME) time = getCycles();
 		
-		/*	
+		///*	
 		for (rows = 0; rows < 480; rows++)	// 640x480
 		{	
 			for(cols = 0; cols < 640/8; cols++)
@@ -231,19 +189,29 @@ int main(void){
 				imgArr[rows][8*cols+5] = *iImgData5;
 				imgArr[rows][8*cols+6] = *iImgData6;
 				imgArr[rows][8*cols+7] = *iImgData7;
+				//imgArr[rows][8*cols+8] = *iImgData8;
+				//imgArr[rows][8*cols+9] = *iImgData9;
+				//imgArr[rows][8*cols+10] = *iImgData10;
+				//imgArr[rows][8*cols+11] = *iImgData11;
+				//imgArr[rows][8*cols+12] = *iImgData12;
+				//imgArr[rows][8*cols+13] = *iImgData13;
+				//imgArr[rows][8*cols+14] = *iImgData14;
+				//imgArr[rows][8*cols+15] = *iImgData15;
 			}
 		}
-		*/
+		//*/
 		
+		/*
 		for (rows = 0; rows < 480; rows++)	// 640x480
 		{	
-			for(cols = 0; cols < 640; cols++)
+			for(cols = 0; cols < 640/16; cols++)
 			{
 				Clock();
 				printf("%d ", *iRowData);
 			}
 			printf("\n");
 		}
+		*/
 		
 		if (RECORD_TIME) printf("Time to extract image: %d cycles\n", getCycles() - time);
 		
@@ -251,7 +219,7 @@ int main(void){
 		*oStart = 1;
 		
 		// Debug print loop
-		/*
+		///*
 		printf("Printing out full image array with buffers\n");
 		for (rows = 48; rows < 432; rows++)	// 640x480
 		{
@@ -264,7 +232,7 @@ int main(void){
 			}
 			printf("\n");
 		}
-		*/
+		//*/
 		
 	} // While(1)
 	
