@@ -261,16 +261,14 @@ wire [15:0] shift_wire;
 initial 
 begin
 	shift <= 0;
-	//shift_clk <= 4'b1000;	// 8
-	shift_clk <= 4'b0100;	// 4
+	shift_clk <= 4'b1000;	// 8
+	//shift_clk <= 4'b0100;	// 4
 end
 
 always@(posedge CCD_PIXCLK)
 begin
 	shift <= {sCCD_B[0],shift[15:1]};
 end
-
-assign shift_wire = {sCCD_B[0],shift[15:1]};
 
 always@(posedge ~CCD_PIXCLK)
 begin
@@ -285,10 +283,10 @@ Sdram_Control_4Port	u7	(
 							//	FIFO Write Side 1
 							//.WR1_DATA({1'b0,sCCD_G[11:7],sCCD_B[11:2]}),
 							//.WR1_DATA({15'b000000000000000,sCCD_B[0]}),
-							.WR1_DATA(shift_wire),
+							.WR1_DATA(shift),
 							.WR1(sCCD_DVAL),
 							.WR1_ADDR(0),					// Memory start for one section of the memory
-							.WR1_MAX_ADDR(640*480/8),
+							.WR1_MAX_ADDR(640*480/16),
 							.WR1_LENGTH(256),
 							//.WR1_LENGTH(1),
 							.WR1_LOAD(!DLY_RST_0),
@@ -311,7 +309,7 @@ Sdram_Control_4Port	u7	(
 				        	//.RD1(Read),
 							.RD1(1),			// Always ready since we control the clock
 				        	.RD1_ADDR(0),
-							.RD1_MAX_ADDR(640*480),
+							.RD1_MAX_ADDR(640*480/16),
 							.RD1_LENGTH(256),
 							//.RD1_LENGTH(1),
 							.RD1_LOAD(!DLY_RST_0),

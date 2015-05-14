@@ -178,25 +178,25 @@ int main(void){
 		///*	
 		for (rows = 0; rows < 480; rows++)	// 640x480
 		{	
-			for(cols = 0; cols < 640/8; cols++)
+			for(cols = 0; cols < 640/16; cols += 16)
 			{
 				Clock();
-				imgArr[rows][8*cols] = *iImgData0;
-				imgArr[rows][8*cols+1] = *iImgData1;
-				imgArr[rows][8*cols+2] = *iImgData2;
-				imgArr[rows][8*cols+3] = *iImgData3;
-				imgArr[rows][8*cols+4] = *iImgData4;
-				imgArr[rows][8*cols+5] = *iImgData5;
-				imgArr[rows][8*cols+6] = *iImgData6;
-				imgArr[rows][8*cols+7] = *iImgData7;
-				//imgArr[rows][8*cols+8] = *iImgData8;
-				//imgArr[rows][8*cols+9] = *iImgData9;
-				//imgArr[rows][8*cols+10] = *iImgData10;
-				//imgArr[rows][8*cols+11] = *iImgData11;
-				//imgArr[rows][8*cols+12] = *iImgData12;
-				//imgArr[rows][8*cols+13] = *iImgData13;
-				//imgArr[rows][8*cols+14] = *iImgData14;
-				//imgArr[rows][8*cols+15] = *iImgData15;
+				imgArr[rows][cols] = *iImgData0;
+				imgArr[rows][cols+1] = *iImgData1;
+				imgArr[rows][cols+2] = *iImgData2;
+				imgArr[rows][cols+3] = *iImgData3;
+				imgArr[rows][cols+4] = *iImgData4;
+				imgArr[rows][cols+5] = *iImgData5;
+				imgArr[rows][cols+6] = *iImgData6;
+				imgArr[rows][cols+7] = *iImgData7;
+				imgArr[rows][cols+8] = *iImgData8;
+				imgArr[rows][cols+9] = *iImgData9;
+				imgArr[rows][cols+10] = *iImgData10;
+				imgArr[rows][cols+11] = *iImgData11;
+				imgArr[rows][cols+12] = *iImgData12;
+				imgArr[rows][cols+13] = *iImgData13;
+				imgArr[rows][cols+14] = *iImgData14;
+				imgArr[rows][cols+15] = *iImgData15;
 			}
 		}
 		//*/
