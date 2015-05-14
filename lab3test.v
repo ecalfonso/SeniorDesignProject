@@ -146,7 +146,7 @@ always@(posedge CLOCK_50)	rClk	<=	~rClk;
 assign CCD_MCLK = rClk[0]; // 25MHZ
 
 //assign LEDR			= HPS_State;	// Use LEDs to show curret state of HPS during processing
-assign LEDR			= shift_wire;
+assign LEDR			= shift;
 
 assign	VGA_R		=	oVGA_R[9:2];
 assign	VGA_G		=	oVGA_G[9:2];
@@ -256,23 +256,32 @@ bin2dec 					(
 // Capture pixels in 8 registers to compress the image
 reg [15:0] shift;
 reg [3:0] shift_clk;
-wire [15:0] shift_wire;
+reg [15:0] shift_sCCD_DVAL;
 
 initial 
 begin
 	shift <= 0;
 	shift_clk <= 4'b1000;	// 8
 	//shift_clk <= 4'b0100;	// 4
+	shift_sCCD_DVAL <= 0;
 end
 
-always@(posedge CCD_PIXCLK)
+always@(posedge CCD_PIXCLK or negedge DLY_RST_1)
 begin
-	shift <= {sCCD_B[0],shift[15:1]};
+	if (!DLY_RST_1) begin
+		shift 				<= 0;
+		shift_sCCD_DVAL 	<= 0;
+	end
+	else begin
+		shift 				<= {sCCD_B[0],shift[15:1]};
+		shift_sCCD_DVAL 	<= {sCCD_DVAL, shift_sCCD_DVAL[15:1]};
+	end
 end
 
-always@(posedge ~CCD_PIXCLK)
+always@(posedge ~CCD_PIXCLK or negedge DLY_RST_1)
 begin
-	shift_clk <= shift_clk + 1;
+	if (!DLY_RST_1)	shift_clk <= 4'b1000;
+	else 					shift_clk <= shift_clk + 1;
 end
 
 Sdram_Control_4Port	u7	(	
@@ -284,7 +293,8 @@ Sdram_Control_4Port	u7	(
 							//.WR1_DATA({1'b0,sCCD_G[11:7],sCCD_B[11:2]}),
 							//.WR1_DATA({15'b000000000000000,sCCD_B[0]}),
 							.WR1_DATA(shift),
-							.WR1(sCCD_DVAL),
+							//.WR1(sCCD_DVAL),
+							.WR1(shift_sCCD_DVAL[0]),
 							.WR1_ADDR(0),					// Memory start for one section of the memory
 							.WR1_MAX_ADDR(640*480/16),
 							.WR1_LENGTH(256),
