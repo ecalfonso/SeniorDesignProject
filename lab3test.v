@@ -145,8 +145,7 @@ always@(posedge CLOCK_50)	rClk	<=	~rClk;
 
 assign CCD_MCLK = rClk[0]; // 25MHZ
 
-//assign LEDR			= HPS_State;	// Use LEDs to show curret state of HPS during processing
-assign LEDR			= shift;
+assign LEDR			= HPS_State;	// Use LEDs to show curret state of HPS during processing
 
 assign	VGA_R		=	oVGA_R[9:2];
 assign	VGA_G		=	oVGA_G[9:2];
@@ -160,7 +159,8 @@ begin
 end
 
 wire [9:0] VGADataIn;
-assign VGADataIn = Read_DATA2[0] ? 10'b1111111111 : 10'b0000000000;
+// assign VGADataIn = Read_DATA2[0] ? 10'b1111111111 : 10'b0000000000;
+assign VGADataIn = 10'b0000000000;	// Force VGA inputs to 0
 
 VGA_Controller		u1	(	//	Host Side
 							.oRequest(Read),				// Read Request is sent to the SDRAM when the VGA pixel scan is at the correct x and y pixel location in the active area
@@ -168,10 +168,6 @@ VGA_Controller		u1	(	//	Host Side
 							.iRed(VGADataIn),
 							.iGreen(VGADataIn),
 							.iBlue(VGADataIn ),
-							
-							//.iRed(Read_DATA2[9:0]),
-							//.iGreen(Read_DATA2[9:0]),
-							//.iBlue(Read_DATA2[9:0]),
 							
 							//	VGA Side
 							.oVGA_R(oVGA_R),
@@ -237,9 +233,9 @@ SEG7_LUT_8 			u5	(
 							.oSEG3(HEX3),
 							.oSEG4(HEX4),
 							.oSEG5(HEX5),
-							.oSEG6(),
-							.oSEG7(),
-							.iDIG(Read_DATA1)
+							.oSEG6(),		// Not supported on DE1-SoC
+							.oSEG7(),		// Not supported on DE1-SoC
+							.iDIG(shift)
 							//.iDIG ({dig6, dig5, dig4, dig3, dig2, dig1})		// Show the proposed digits on the HEX displays
 						);
 						
@@ -254,15 +250,15 @@ bin2dec 					(
 						);
 						
 // Capture pixels in 8 registers to compress the image
-reg [15:0] shift;
-reg [3:0] shift_clk;
-reg [15:0] shift_sCCD_DVAL;
+parameter SHIFT_WIDTH = 32;
+reg [SHIFT_WIDTH-1:0] shift;
+reg [SHIFT_WIDTH-1:0] shift_sCCD_DVAL;
+reg [4:0] shift_clk;
 
 initial 
 begin
 	shift <= 0;
-	shift_clk <= 4'b1000;	// 8
-	//shift_clk <= 4'b0100;	// 4
+	shift_clk <= SHIFT_WIDTH/2;
 	shift_sCCD_DVAL <= 0;
 end
 
@@ -273,14 +269,14 @@ begin
 		shift_sCCD_DVAL 	<= 0;
 	end
 	else begin
-		shift 				<= {sCCD_B[0],shift[15:1]};
-		shift_sCCD_DVAL 	<= {sCCD_DVAL, shift_sCCD_DVAL[15:1]};
+		shift 				<= {sCCD_B[0],shift[SHIFT_WIDTH-1:1]};
+		shift_sCCD_DVAL 	<= {sCCD_DVAL, shift_sCCD_DVAL[SHIFT_WIDTH-1:1]};
 	end
 end
 
 always@(posedge ~CCD_PIXCLK or negedge DLY_RST_1)
 begin
-	if (!DLY_RST_1)	shift_clk <= 4'b1000;
+	if (!DLY_RST_1)	shift_clk <= SHIFT_WIDTH/2;
 	else 					shift_clk <= shift_clk + 1;
 end
 
@@ -291,35 +287,35 @@ Sdram_Control_4Port	u7	(
 
 							//	FIFO Write Side 1
 							//.WR1_DATA({1'b0,sCCD_G[11:7],sCCD_B[11:2]}),
-							//.WR1_DATA({15'b000000000000000,sCCD_B[0]}),
-							.WR1_DATA(shift),
+							.WR1_DATA(shift[15:0]),
 							//.WR1(sCCD_DVAL),
 							.WR1(shift_sCCD_DVAL[0]),
 							.WR1_ADDR(0),					// Memory start for one section of the memory
-							.WR1_MAX_ADDR(640*480/16),
+							.WR1_MAX_ADDR(640*480/SHIFT_WIDTH),
 							.WR1_LENGTH(256),
 							//.WR1_LENGTH(1),
 							.WR1_LOAD(!DLY_RST_0),
-							.WR1_CLK(shift_clk[3]),		// This clock is directly from the CCD Camera Module, the Camera controls the write to memory
-							// CCD data is written on the falling edge of the CCD_PIXCLK
+							.WR1_CLK(shift_clk[4]),		// This clock is directly from the CCD Camera Module, the Camera controls the write to memory
 
 							//	FIFO Write Side 2
-							//.WR2_DATA(	{1'b0,sCCD_G[6:2],sCCD_R[11:2]}),
-							.WR2_DATA({15'b000000000000000,sCCD_R[0]}),
-							.WR2(sCCD_DVAL),
+							//.WR2_DATA({1'b0,sCCD_G[6:2],sCCD_R[11:2]}),
+							.WR2_DATA(shift[31:16]),
+							//.WR2(sCCD_DVAL),
+							.WR2(shift_sCCD_DVAL[0]),
 							.WR2_ADDR(22'h100000),		// Memory start for the second section of memory - why can we not write data into one memory block?
-							.WR2_MAX_ADDR(22'h100000+640*480),
+							.WR2_MAX_ADDR(22'h100000+(640*480/SHIFT_WIDTH)),
 							.WR2_LENGTH(256),
 							//.WR2_LENGTH(1),
 							.WR2_LOAD(!DLY_RST_0),
-							.WR2_CLK(~CCD_PIXCLK),
+							//.WR2_CLK(~CCD_PIXCLK),
+							.WR2_CLK(shift_clk[4]),
 
 							//	FIFO Read Side 1
 						   .RD1_DATA(Read_DATA1),
 				        	//.RD1(Read),
 							.RD1(1),			// Always ready since we control the clock
 				        	.RD1_ADDR(0),
-							.RD1_MAX_ADDR(640*480/16),
+							.RD1_MAX_ADDR(640*480/SHIFT_WIDTH),
 							.RD1_LENGTH(256),
 							//.RD1_LENGTH(1),
 							.RD1_LOAD(!DLY_RST_0),
@@ -328,13 +324,15 @@ Sdram_Control_4Port	u7	(
 							
 							//	FIFO Read Side 2
 						   .RD2_DATA(Read_DATA2),
-							.RD2(Read),
+							//.RD2(Read),
+							.RD2(1),			// Always ready since we control the clock
 							.RD2_ADDR(22'h100000), // Memory start address
-							.RD2_MAX_ADDR(22'h100000+640*480),	// Allocate enough space for whole 640 x 480 display
+							.RD2_MAX_ADDR(22'h100000+(640*480/SHIFT_WIDTH)),	// Allocate enough space for whole 640 x 480 display
 							.RD2_LENGTH(256),	// 8 bits long data storage
 							//.RD2_LENGTH(1),
 				        	.RD2_LOAD(!DLY_RST_0),
-							.RD2_CLK(~VGA_CTRL_CLK),
+							//.RD2_CLK(~VGA_CTRL_CLK),
+							.RD2_CLK(reg_HPS_Clk),
 							
 							//	SDRAM Side - Initialize the SDRAM - Can only initialize one per design
 							// Qsys does not allow the allocation of more than one SDRAM connected to the same DE1-SOC DRAM pin
@@ -367,53 +365,54 @@ reg reg_HPS_Clk;
 initial reg_HPS_Clk = 0;
 always@(HPS_CLK) reg_HPS_Clk <= HPS_CLK;
 
-// Wire that puts image data into HPS
-//wire imgDataIn;
-//assign imgDataIn = (Read_DATA1[7:0] > SW[8:1]) ? 1 : 0;
-//assign imgDataIn = Read_DATA1[0];
-
 wire [31:0] HPS_Digits;
 wire [9:0] HPS_State;
 		  
+/* How data is represented 
+ * shift = {31 30 29 ... 2 1 0}
+ * WR2 = [31:16], WR1 = shift[15:0]
+ *
+ * Correct data in output
+ * ReadData2[15:0], ReadData1[15:0]
+ */
+ 
 	mysystem u0 (
-         .sdram_clk_clk                (sdram_ctrl_clk),                //             sdram_clk.clk
-        .dram_clk_clk                 (DRAM_CLK),                 //              dram_clk.clk
-        //.d5m_clk_clk                  (CCD_MCLK),                  //               d5m_clk.clk
-        .vga_clk_clk                  (VGA_CTRL_CLK),                   //               vga_clk.clk
-        .system_pll_0_refclk_clk      (CLOCK_50),      //   system_pll_0_refclk.clk
-        .system_pll_0_reset_reset     (1'b0),      //    system_pll_0_reset.reset
-        .memory_mem_a       (HPS_DDR3_ADDR),       //      memory.mem_a
-        .memory_mem_ba      (HPS_DDR3_BA),      //            .mem_ba
-        .memory_mem_ck      (HPS_DDR3_CK_P),      //            .mem_ck
-        .memory_mem_ck_n    (HPS_DDR3_CK_N),    //            .mem_ck_n
-        .memory_mem_cke     (HPS_DDR3_CKE),     //            .mem_cke
-        .memory_mem_cs_n    (HPS_DDR3_CS_N),    //            .mem_cs_n
-        .memory_mem_ras_n   (HPS_DDR3_RAS_N),   //            .mem_ras_n
-        .memory_mem_cas_n   (HPS_DDR3_CAS_N),   //            .mem_cas_n
-        .memory_mem_we_n    (HPS_DDR3_WE_N),    //            .mem_we_n
-        .memory_mem_reset_n (HPS_DDR3_RESET_N), //            .mem_reset_n
-        .memory_mem_dq      (HPS_DDR3_DQ),      //            .mem_dq
-        .memory_mem_dqs     (HPS_DDR3_DQS_P),     //            .mem_dqs
-        .memory_mem_dqs_n   (HPS_DDR3_DQS_N),   //            .mem_dqs_n
-        .memory_mem_odt     (HPS_DDR3_ODT),     //            .mem_odt
-        .memory_mem_dm      (HPS_DDR3_DM),      //            .mem_dm
-        .memory_oct_rzqin   (HPS_DDR3_RZQ),   //            .oct_rzqin
+        .sdram_clk_clk                (sdram_ctrl_clk), //             sdram_clk.clk
+        .dram_clk_clk                 (DRAM_CLK),        //              dram_clk.clk
+        //.d5m_clk_clk                (CCD_MCLK),      //               d5m_clk.clk
+        .vga_clk_clk                  (VGA_CTRL_CLK),    //               vga_clk.clk
+        .system_pll_0_refclk_clk      (CLOCK_50),      	//   system_pll_0_refclk.clk
+        .system_pll_0_reset_reset     (1'b0),   			//    system_pll_0_reset.reset
+        .memory_mem_a       (HPS_DDR3_ADDR),    			//      memory.mem_a
+        .memory_mem_ba      (HPS_DDR3_BA),      			//            .mem_ba
+        .memory_mem_ck      (HPS_DDR3_CK_P),    			//            .mem_ck
+        .memory_mem_ck_n    (HPS_DDR3_CK_N),    			//            .mem_ck_n
+        .memory_mem_cke     (HPS_DDR3_CKE),     			//            .mem_cke
+        .memory_mem_cs_n    (HPS_DDR3_CS_N),    			//            .mem_cs_n
+        .memory_mem_ras_n   (HPS_DDR3_RAS_N),   			//            .mem_ras_n
+        .memory_mem_cas_n   (HPS_DDR3_CAS_N),   			//            .mem_cas_n
+        .memory_mem_we_n    (HPS_DDR3_WE_N),    			//            .mem_we_n
+        .memory_mem_reset_n (HPS_DDR3_RESET_N), 			//            .mem_reset_n
+        .memory_mem_dq      (HPS_DDR3_DQ),      			//            .mem_dq
+        .memory_mem_dqs     (HPS_DDR3_DQS_P),   			//            .mem_dqs
+        .memory_mem_dqs_n   (HPS_DDR3_DQS_N),   			//            .mem_dqs_n
+        .memory_mem_odt     (HPS_DDR3_ODT),     			//            .mem_odt
+        .memory_mem_dm      (HPS_DDR3_DM),      			//            .mem_dm
+        .memory_oct_rzqin   (HPS_DDR3_RZQ),   				//            .oct_rzqin
         .system_ref_clk_clk       (CLOCK_50),       		// HPS reference clock
         .system_ref_reset_reset   (1'b0),   					// We're not resetting
 		  
-		  .startsignal_export       (HPS_Capture_Start),       //         startsignal.export
-        .hps_clk_out_export       (HPS_CLK),       //         hps_clk_out.export
-		  //.verilog_ack_in_export    (reg_HPS_Clk[1]),    //      verilog_ack_in.export
+		  .startsignal_export       	(HPS_Capture_Start),   //         startsignal.export
+        .hps_clk_out_export       	(HPS_CLK),       		//         hps_clk_out.export
 		  
-        //.imgdata_in_export        (imgDataIn),        //          imgdata_in.export
-		  .imgdata_in_0_export        (Read_DATA1[0]),        //          imgdata_in.export
+		  .imgdata_in_0_export        (Read_DATA1[0]),      //          imgdata_in.export
 		  .imgdata_in_1_export      	(Read_DATA1[1]),      //        imgdata_in_1.export
         .imgdata_in_2_export      	(Read_DATA1[2]),      //        imgdata_in_2.export
         .imgdata_in_3_export      	(Read_DATA1[3]),      //        imgdata_in_3.export
         .imgdata_in_4_export      	(Read_DATA1[4]),      //        imgdata_in_4.export
         .imgdata_in_5_export      	(Read_DATA1[5]),      //        imgdata_in_5.export
         .imgdata_in_6_export      	(Read_DATA1[6]),      //        imgdata_in_6.export
-        .imgdata_in_7_export      	(Read_DATA1[7]),       //        imgdata_in_7.export
+        .imgdata_in_7_export      	(Read_DATA1[7]),      //        imgdata_in_7.export
 		  .imgdata_in_8_export      	(Read_DATA1[8]),      //        imgdata_in_8.export
         .imgdata_in_9_export      	(Read_DATA1[9]),      //        imgdata_in_9.export
         .imgdata_in_10_export     	(Read_DATA1[10]),     //       imgdata_in_10.export
@@ -421,15 +420,32 @@ wire [9:0] HPS_State;
         .imgdata_in_12_export     	(Read_DATA1[12]),     //       imgdata_in_12.export
         .imgdata_in_13_export     	(Read_DATA1[13]),     //       imgdata_in_13.export
         .imgdata_in_14_export     	(Read_DATA1[14]),     //       imgdata_in_14.export
-        .imgdata_in_15_export     	(Read_DATA1[15]),      //       imgdata_in_15.export
-        .row_data_in_export       	(Read_DATA1),       //         row_data_in.export
+        .imgdata_in_15_export     	(Read_DATA1[15]),     //       imgdata_in_15.export
+        .imgdata_in_16_export     	(Read_DATA2[0]),     //       imgdata_in_16.export
+        .imgdata_in_17_export     	(Read_DATA2[1]),     //       imgdata_in_17.export
+        .imgdata_in_18_export     	(Read_DATA2[2]),     //       imgdata_in_18.export
+        .imgdata_in_19_export     	(Read_DATA2[3]),     //       imgdata_in_19.export
+        .imgdata_in_20_export     	(Read_DATA2[4]),     //       imgdata_in_20.export
+        .imgdata_in_21_export     	(Read_DATA2[5]),     //       imgdata_in_21.export
+        .imgdata_in_22_export     	(Read_DATA2[6]),     //       imgdata_in_22.export
+        .imgdata_in_23_export     	(Read_DATA2[7]),     //       imgdata_in_23.export
+        .imgdata_in_24_export     	(Read_DATA2[8]),     //       imgdata_in_24.export
+        .imgdata_in_25_export     	(Read_DATA2[9]),     //       imgdata_in_25.export
+        .imgdata_in_26_export     	(Read_DATA2[10]),     //       imgdata_in_26.export
+        .imgdata_in_27_export     	(Read_DATA2[11]),     //       imgdata_in_27.export
+        .imgdata_in_28_export     	(Read_DATA2[12]),     //       imgdata_in_28.export
+        .imgdata_in_29_export     	(Read_DATA2[13]),     //       imgdata_in_29.export
+        .imgdata_in_30_export     	(Read_DATA2[14]),     //       imgdata_in_30.export
+        .imgdata_in_31_export     	(Read_DATA2[15]),     //       imgdata_in_31.export
+		  
+		  //.row_data_in_export       (Read_DATA1),      	 //         row_data_in.export
         //.col_data_in_export       (colDataIn),
 
-        .row_addr_out_export      (HPS_Row_Addr),      //        row_addr_out.export
-        .col_addr_out_export      (HPS_Col_Addr),      //        col_addr_out.export
+        //.row_addr_out_export      (HPS_Row_Addr),      	//        row_addr_out.export
+        //.col_addr_out_export      (HPS_Col_Addr),      	//        col_addr_out.export
 		  
-        .hps_state_out_export     (HPS_State),     //       hps_state_out.export
-        .hps_digits_out_export    (HPS_Digits)    //      hps_digits_out.export
+        .hps_state_out_export     	(HPS_State),    			//       hps_state_out.export
+        .hps_digits_out_export    	(HPS_Digits)    			//      hps_digits_out.export
     );
 	
 endmodule
