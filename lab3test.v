@@ -158,6 +158,7 @@ begin
 	rCCD_FVAL	<=	CCD_FVAL;
 end
 
+// Decompress image data 
 wire [9:0] VGADataIn;
 assign VGADataIn = Read_DATA2[0] ? 10'b1111111111 : 10'b0000000000;
 
@@ -167,10 +168,6 @@ VGA_Controller		u1	(	//	Host Side
 							.iRed(VGADataIn),
 							.iGreen(VGADataIn),
 							.iBlue(VGADataIn ),
-							
-							//.iRed(Read_DATA2[9:0]),
-							//.iGreen(Read_DATA2[9:0]),
-							//.iBlue(Read_DATA2[9:0]),
 							
 							//	VGA Side
 							.oVGA_R(oVGA_R),
@@ -213,7 +210,7 @@ RAW2RGB				u4	(
 							.iRST(DLY_RST_1),
 							.iDATA(mCCD_DATA),
 							.iDVAL(mCCD_DVAL),
-							.iThreshold(SW[8:1]),
+							.iThreshold(SW[9:0]),
 							.oRed(sCCD_R),
 							.oGreen(sCCD_G),
 							.oBlue(sCCD_B),
@@ -321,8 +318,10 @@ I2C_CCD_Config 		u8	(
 							.iCLK(CLOCK_50),
 							.iRST_N(DLY_RST_2),
 							.iEXPOSURE_ADJ(KEY[1]),
-							.iEXPOSURE_DEC_p(SW[0]),
-							.iZOOM_MODE_SW(SW[9]),
+							//.iEXPOSURE_DEC_p(SW[0]),
+							//.iZOOM_MODE_SW(SW[9]),
+							.iEXPOSURE_DEC_p(1'b0),
+							.iZOOM_MODE_SW(1'b0),
 							//	I2C Side
 							.I2C_SCLK(GPIO_1[24]),
 							.I2C_SDAT(GPIO_1[23])
@@ -332,11 +331,6 @@ I2C_CCD_Config 		u8	(
 reg reg_HPS_Clk;	
 initial reg_HPS_Clk = 0;
 always@(HPS_CLK) reg_HPS_Clk <= HPS_CLK;
-
-// Wire that puts image data into HPS
-//wire imgDataIn;
-//assign imgDataIn = (Read_DATA1[7:0] > SW[8:1]) ? 1 : 0;
-//assign imgDataIn = Read_DATA1[0];
 
 wire [31:0] HPS_Digits;
 wire [9:0] HPS_State;
@@ -369,7 +363,6 @@ wire [9:0] HPS_State;
 		  
 		  .startsignal_export       (HPS_Capture_Start),       //         startsignal.export
         .hps_clk_out_export       (HPS_CLK),       //         hps_clk_out.export
-		  //.verilog_ack_in_export    (reg_HPS_Clk[1]),    //      verilog_ack_in.export
 		  
         //.imgdata_in_export        (imgDataIn),        //          imgdata_in.export
 		  .imgdata_in_export        (Read_DATA1[0]),        //          imgdata_in.export
