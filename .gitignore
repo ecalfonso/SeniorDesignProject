@@ -63,4 +63,5 @@ sdram_pll*
 *.qip
 *.spd
 *.f
-
+*.qws
+*.xml
