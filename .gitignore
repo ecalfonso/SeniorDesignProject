@@ -65,3 +65,4 @@ sdram_pll*
 *.f
 *.qws
 *.xml
+.qsys_edit

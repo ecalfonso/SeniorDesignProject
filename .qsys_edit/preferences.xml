@@ -18,7 +18,7 @@
    <frequency preferredWidth="379" />
   </columns>
  </clocktable>
- <window width="1280" height="770" x="0" y="0" />
+ <window width="1280" height="760" x="0" y="0" />
  <library
    expandedCategories="Library/Verification/Simulation,Project,Library/Verification,Library,Library/Embedded Processors" />
  <hdlexample language="VERILOG" />
