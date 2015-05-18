@@ -167,7 +167,7 @@ int main(void){
 		}
 		
 		*oStart = 0;				// Stop camera
-		delay(2);					// Delay to allow verilog to settle
+		//delay(2);					// Delay to allow verilog to settle
 		
 		// -----------------------------------------------------------------------------------
 		// 
