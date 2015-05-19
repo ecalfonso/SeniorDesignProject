@@ -138,7 +138,6 @@ assign	CCD_PIXCLK	=	GPIO_1[0]; //PixCLK
 assign	GPIO_1[19]	=	1'b1;  // tRIGGER
 assign	GPIO_1[17]	=	DLY_RST_1;
 
-
 assign	VGA_CLK		=	VGA_CTRL_CLK;
 
 always@(posedge CLOCK_50)	rClk	<=	~rClk;
