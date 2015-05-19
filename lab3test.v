@@ -159,15 +159,14 @@ end
 
 // Decompress image data 
 wire [9:0] VGADataIn;
-// assign VGADataIn = Read_DATA2[0] ? 10'b1111111111 : 10'b0000000000;
-assign VGADataIn = (Read_DATA2 > SW[9:0]) ? 10'b1111111111 : 10'b0000000000;
+assign VGADataIn = Read_DATA2[0] ? 10'b1111111111 : 10'b0000000000;
 
 VGA_Controller		u1	(	//	Host Side
 							.oRequest(Read),				// Read Request is sent to the SDRAM when the VGA pixel scan is at the correct x and y pixel location in the active area
 							
 							.iRed(VGADataIn),
 							.iGreen(VGADataIn),
-							.iBlue(VGADataIn),
+							.iBlue(VGADataIn ),
 							
 							//	VGA Side
 							.oVGA_R(oVGA_R),
@@ -254,8 +253,8 @@ Sdram_Control_4Port	u7	(
 							.CLK(sdram_ctrl_clk),
 
 							//	FIFO Write Side 1
-							.WR1_DATA({1'b0,sCCD_G[11:7],sCCD_B[11:2]}),
-							//.WR1_DATA({15'b000000000000000,sCCD_B[0]}),
+							//.WR1_DATA({1'b0,sCCD_G[11:7],sCCD_B[11:2]}),
+							.WR1_DATA({15'b000000000000000,sCCD_B[0]}),
 							.WR1(sCCD_DVAL),
 							.WR1_ADDR(0),					// Memory start for one section of the memory
 							.WR1_MAX_ADDR(640*480),
@@ -266,8 +265,8 @@ Sdram_Control_4Port	u7	(
 							// CCD data is written on the falling edge of the CCD_PIXCLK
 
 							//	FIFO Write Side 2
-							.WR2_DATA(	{1'b0,sCCD_G[6:2],sCCD_R[11:2]}),
-							//.WR2_DATA({15'b000000000000000,sCCD_R[0]}),
+							//.WR2_DATA(	{1'b0,sCCD_G[6:2],sCCD_R[11:2]}),
+							.WR2_DATA({15'b000000000000000,sCCD_R[0]}),
 							.WR2(sCCD_DVAL),
 							.WR2_ADDR(22'h100000),		// Memory start for the second section of memory - why can we not write data into one memory block?
 							.WR2_MAX_ADDR(22'h100000+640*480),
@@ -335,9 +334,6 @@ always@(HPS_CLK) reg_HPS_Clk <= HPS_CLK;
 wire [31:0] HPS_Digits;
 wire [9:0] HPS_State;
 		  
-wire imgDataIn;
-assign imgDataIn = (Read_DATA1 > SW[9:0]) ? 1'b1 : 1'b0;
-		  
 	mysystem u0 (
          .sdram_clk_clk                (sdram_ctrl_clk),                //             sdram_clk.clk
         .dram_clk_clk                 (DRAM_CLK),                 //              dram_clk.clk
@@ -367,8 +363,8 @@ assign imgDataIn = (Read_DATA1 > SW[9:0]) ? 1'b1 : 1'b0;
 		  .startsignal_export       (HPS_Capture_Start),       //         startsignal.export
         .hps_clk_out_export       (HPS_CLK),       //         hps_clk_out.export
 		  
-        .imgdata_in_export        (imgDataIn),        //          imgdata_in.export
-		  //.imgdata_in_export        (Read_DATA1[0]),        //          imgdata_in.export
+        //.imgdata_in_export        (imgDataIn),        //          imgdata_in.export
+		  .imgdata_in_export        (Read_DATA1[0]),        //          imgdata_in.export
         .row_data_in_export       (rowDataIn),       //         row_data_in.export
         //.col_data_in_export       (colDataIn),
 
