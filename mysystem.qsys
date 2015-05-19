@@ -16,7 +16,7 @@
    {
       datum _sortIndex
       {
-         value = "13";
+         value = "12";
          type = "int";
       }
    }
@@ -24,7 +24,7 @@
    {
       datum _sortIndex
       {
-         value = "9";
+         value = "8";
          type = "int";
       }
    }
@@ -32,7 +32,7 @@
    {
       datum _sortIndex
       {
-         value = "14";
+         value = "13";
          type = "int";
       }
    }
@@ -40,7 +40,7 @@
    {
       datum _sortIndex
       {
-         value = "11";
+         value = "10";
          type = "int";
       }
    }
@@ -48,7 +48,7 @@
    {
       datum _sortIndex
       {
-         value = "10";
+         value = "9";
          type = "int";
       }
    }
@@ -64,19 +64,11 @@
    {
       datum _sortIndex
       {
-         value = "12";
+         value = "11";
          type = "int";
       }
    }
    element RowData
-   {
-      datum _sortIndex
-      {
-         value = "8";
-         type = "int";
-      }
-   }
-   element Verilog_ACK
    {
       datum _sortIndex
       {
@@ -88,7 +80,7 @@
    {
       datum baseAddress
       {
-         value = "160";
+         value = "144";
          type = "String";
       }
    }
@@ -96,7 +88,7 @@
    {
       datum _sortIndex
       {
-         value = "15";
+         value = "14";
          type = "int";
       }
    }
@@ -120,7 +112,7 @@
    {
       datum _sortIndex
       {
-         value = "16";
+         value = "15";
          type = "int";
       }
    }
@@ -132,75 +124,11 @@
          type = "int";
       }
    }
-   element ImageData.s1
-   {
-      datum baseAddress
-      {
-         value = "96";
-         type = "String";
-      }
-   }
-   element RowData.s1
-   {
-      datum baseAddress
-      {
-         value = "128";
-         type = "String";
-      }
-   }
-   element ColData.s1
-   {
-      datum baseAddress
-      {
-         value = "0";
-         type = "String";
-      }
-   }
-   element onchip_memory2_0.s1
-   {
-      datum baseAddress
-      {
-         value = "0";
-         type = "String";
-      }
-   }
-   element start.s1
-   {
-      datum baseAddress
-      {
-         value = "144";
-         type = "String";
-      }
-   }
    element HPS_State.s1
    {
       datum baseAddress
       {
          value = "48";
-         type = "String";
-      }
-   }
-   element HPS_Digits.s1
-   {
-      datum baseAddress
-      {
-         value = "64";
-         type = "String";
-      }
-   }
-   element RowAddr.s1
-   {
-      datum baseAddress
-      {
-         value = "80";
-         type = "String";
-      }
-   }
-   element Verilog_ACK.s1
-   {
-      datum baseAddress
-      {
-         value = "112";
          type = "String";
       }
    }
@@ -212,11 +140,67 @@
          type = "String";
       }
    }
+   element ImageData.s1
+   {
+      datum baseAddress
+      {
+         value = "96";
+         type = "String";
+      }
+   }
+   element RowAddr.s1
+   {
+      datum baseAddress
+      {
+         value = "80";
+         type = "String";
+      }
+   }
    element HPS_CLK.s1
    {
       datum baseAddress
       {
          value = "16";
+         type = "String";
+      }
+   }
+   element HPS_Digits.s1
+   {
+      datum baseAddress
+      {
+         value = "64";
+         type = "String";
+      }
+   }
+   element ColData.s1
+   {
+      datum baseAddress
+      {
+         value = "0";
+         type = "String";
+      }
+   }
+   element RowData.s1
+   {
+      datum baseAddress
+      {
+         value = "112";
+         type = "String";
+      }
+   }
+   element start.s1
+   {
+      datum baseAddress
+      {
+         value = "128";
+         type = "String";
+      }
+   }
+   element onchip_memory2_0.s1
+   {
+      datum baseAddress
+      {
+         value = "0";
          type = "String";
       }
    }
@@ -316,11 +300,6 @@
  <interface
    name="imgdata_in"
    internal="ImageData.external_connection"
-   type="conduit"
-   dir="end" />
- <interface
-   name="verilog_ack_in"
-   internal="Verilog_ACK.external_connection"
    type="conduit"
    dir="end" />
  <interface
@@ -1110,24 +1089,6 @@
   <parameter name="width" value="32" />
   <parameter name="clockRate" value="50000000" />
  </module>
- <module
-   kind="altera_avalon_pio"
-   version="13.1"
-   enabled="1"
-   name="Verilog_ACK">
-  <parameter name="bitClearingEdgeCapReg" value="true" />
-  <parameter name="bitModifyingOutReg" value="false" />
-  <parameter name="captureEdge" value="true" />
-  <parameter name="direction" value="Input" />
-  <parameter name="edgeType" value="FALLING" />
-  <parameter name="generateIRQ" value="true" />
-  <parameter name="irqType" value="EDGE" />
-  <parameter name="resetValue" value="0" />
-  <parameter name="simDoTestBenchWiring" value="true" />
-  <parameter name="simDrivenValue" value="0" />
-  <parameter name="width" value="1" />
-  <parameter name="clockRate" value="50000000" />
- </module>
  <module kind="altera_avalon_pio" version="13.1" enabled="1" name="RowData">
   <parameter name="bitClearingEdgeCapReg" value="true" />
   <parameter name="bitModifyingOutReg" value="false" />
@@ -1266,7 +1227,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="start.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0090" />
+  <parameter name="baseAddress" value="0x0080" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -1275,7 +1236,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="jtag_uart_0.avalon_jtag_slave">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00a0" />
+  <parameter name="baseAddress" value="0x0090" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -1359,11 +1320,6 @@
    kind="clock"
    version="13.1"
    start="sys_sdram_pll_0.sys_clk"
-   end="Verilog_ACK.clk" />
- <connection
-   kind="clock"
-   version="13.1"
-   start="sys_sdram_pll_0.sys_clk"
    end="RowData.clk" />
  <connection
    kind="reset"
@@ -1379,16 +1335,6 @@
    kind="reset"
    version="13.1"
    start="sys_sdram_pll_0.reset_source"
-   end="Verilog_ACK.reset" />
- <connection
-   kind="reset"
-   version="13.1"
-   start="hps_0.h2f_reset"
-   end="Verilog_ACK.reset" />
- <connection
-   kind="reset"
-   version="13.1"
-   start="sys_sdram_pll_0.reset_source"
    end="RowData.reset" />
  <connection
    kind="reset"
@@ -1400,15 +1346,6 @@
    version="13.1"
    start="hps_0.h2f_lw_axi_master"
    end="RowData.s1">
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0080" />
-  <parameter name="defaultConnection" value="false" />
- </connection>
- <connection
-   kind="avalon"
-   version="13.1"
-   start="hps_0.h2f_lw_axi_master"
-   end="Verilog_ACK.s1">
   <parameter name="arbitrationPriority" value="1" />
   <parameter name="baseAddress" value="0x0070" />
   <parameter name="defaultConnection" value="false" />
@@ -1504,13 +1441,6 @@
    start="hps_0.f2h_irq0"
    end="ImageData.irq">
   <parameter name="irqNumber" value="0" />
- </connection>
- <connection
-   kind="interrupt"
-   version="13.1"
-   start="hps_0.f2h_irq0"
-   end="Verilog_ACK.irq">
-  <parameter name="irqNumber" value="1" />
  </connection>
  <connection
    kind="interrupt"

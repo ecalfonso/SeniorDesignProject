@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <math.h>
 //#include "neural_network_float.h"		// Neural network 
-//#include "neural_network_double.h"		// Neural network 
+//#include "neural_network_double.h"	// Neural network 
 
 
 volatile int * oStart			= (int *) 0xFF200090;
@@ -20,20 +20,6 @@ volatile int * oColCol			= (int *) 0xFF200020;
 
 volatile int * oState			= (int *) 0xFF200030;		// Used to show the state with LEDs
 volatile int * oDigits			= (int *) 0xFF200040;		// Displays proposed digits to HEX modules
-
-
-
-//volatile int * DDR3			= (int *) 0x0010000; 	// Up to 0xFFF0000
-
-void delay(int v)
-{
-	int c, d;
-	int max;
-	max = 1000 * v;
-	for(c = 1; c <= max; c++)
-		for(d = 1; d <= 327; d++)
-		{}
-}
 
 void Clock(void)
 {
@@ -51,16 +37,6 @@ int myMod(int n)
 {
 	int x[11] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
 	return x[n];
-}
-
-double mySigmoid(double x)
-{
-	if (x > 5) 
-		return 0;
-	else if (x < -5) 
-		return 1;
-	else 
-		return 1/(1 + exp(x));
 }
 
 static inline unsigned int getCycles ()
@@ -130,8 +106,8 @@ int main(void){
 	int digitWidth = 0;
 	int digitHeight = 0;
 	int segmentIntensity = 0;			// Accumulator to check if the segment isn't all white pixels
-	//int digitArr[784] = { 0 };
-	int digitArr[400] = { 0 };
+	int digitArr[784] = { 0 };
+	//int digitArr[400] = { 0 };
 	
 	
 	// Neural network variables
@@ -143,9 +119,6 @@ int main(void){
 	
 	int answer = 0;
 	
-	// TESTING VARIABLE
-	int temp;
-	
 	// Timing variables
 	int RECORD_TIME = 0;				// Variable that decides if we print (1) or not (0)
 	
@@ -155,7 +128,7 @@ int main(void){
 	//
 	// -----------------------------------------------------------------------------------
 	printf("System restart\n");
-	*oStart = 1;					// Initiate clock system
+	*oStart = 1;				// Initiate clock system
 	*oClock = 0;				// Set HPS simulated clock to 0
 	*oDigits = 0;
 
@@ -175,21 +148,17 @@ int main(void){
 		max = -100000000;
 		answer = 0;
 		
+		rowsSumMax = 0;
+		colsSumMax = 0;
+		
 		// -----------------------------------------------------------------------------------
 		// 
 		// Prompt user to begin
 		//
 		// -----------------------------------------------------------------------------------
 		*oState = 1;				// State 1 - Ready
-		if (RECORD_TIME)
-		{
-			printf("We will print out timing\n");
-			printf("Press Enter to continue or enter (0) to stop timing: ");
-		} else {
-			printf("We will run without timing\n");
-			printf("Press Enter to continue or enter (1) to timing this, and future runs: ");
-		}
-		
+			
+		printf("Enter (1) for timing, (0) just to run: ");
 		scanf("%d", &RECORD_TIME);
 		
 		switch (RECORD_TIME)
@@ -199,8 +168,8 @@ int main(void){
 			default:	RECORD_TIME = 0;
 		}
 		
-		*oStart = 0;				// Stop camera
-		delay(2);					// Delay to allow verilog to settle
+		*oStart = 0;				// Stop camera, begin system
+		if (RECORD_TIME) time = getCycles();
 		
 		// -----------------------------------------------------------------------------------
 		// 
@@ -211,8 +180,6 @@ int main(void){
 		// -----------------------------------------------------------------------------------
 		
 		*oState = 3;				// State 2 - Reading image
-		
-		if (RECORD_TIME) time = getCycles();
 			
 		for (rows = 0; rows < 480; rows++)	// 640x480
 		{	
@@ -222,14 +189,12 @@ int main(void){
 				imgArr[rows][cols] = *iImgData;		// 0's and 1's are determined in verilog
 			}
 		}
-		
-		if (RECORD_TIME) printf("Time to extract image: %d cycles\n", getCycles() - time);
-		
+				
 		// Restart Clock because we're done with the SDRAM
 		*oStart = 1;
 		
-		// Debug print loop
-		///*
+		// DEBUG - Print out entire image array with buffer
+		/*
 		printf("Printing out full image array with buffers\n");
 		for (rows = 48; rows < 432; rows++)	// 640x480
 		{
@@ -243,6 +208,332 @@ int main(void){
 			printf("\n");
 		}
 		//*/
+		
+		// -----------------------------------------------------------------------------------
+		// 
+		// Detect white projector space
+		//	Put a 10% buffer on each side:	cols = 64 -> 576 : imgLeftSide -> imgRightSide
+		//									rows = 48 -> 432 : imgTopSide -> imgBotSide
+		//
+		// -----------------------------------------------------------------------------------
+		*oState = 7;				// State 3 - Detect projector
+				
+		// Sum up rows and columns
+		for (cols = colsMin; cols < colsMax; cols++)
+		{
+			for (rows = rowsMin; rows < rowsMax; rows++)
+			{
+				colsSumArr[cols] += imgArr[rows][cols];
+				rowsSumArr[rows] += imgArr[rows][cols];
+			}
+		}
+		
+		// Find max value of rows sum
+		for (rows = 0; rows < 480; rows++)
+		{
+			if (rowsSumArr[rows] > rowsSumMax)
+				rowsSumMax = rowsSumArr[rows];
+		}
+		
+		// Calculate rows level - ~10% less than the max
+		rowsLevel = rowsSumMax - (rowsSumMax >> 3);
+		
+		// Find max value of cols sum
+		for (cols = 0; cols < 640; cols++)
+		{
+			if (colsSumArr[cols] > colsSumMax)
+				colsSumMax = colsSumArr[cols];
+		}
+		
+		// Calculate cols level - ~5% less than the max
+		colsLevel = colsSumMax - (colsSumMax >> 4);
+		
+		// Generate the array of binary values for rows and cols
+		for (rows = rowsMin; rows < rowsMax; rows++)
+		{
+			if (rowsSumArr[rows] > rowsLevel)
+				binaryRowsSumArr[rows] = 1;
+			else
+				binaryRowsSumArr[rows] = 0;
+		}
+		for (cols = colsMin; cols < colsMax; cols++)
+		{
+			if (colsSumArr[cols] > colsLevel)
+				binaryColsSumArr[cols] = 1;
+			else
+				binaryColsSumArr[cols] = 0;
+		}
+		
+		// Scan for left of white projector space
+		for (cols = colsMin; cols < colsMax; cols++)
+		{
+			if (binaryColsSumArr[cols] == 1)
+			{
+				projLeft = cols;
+				break;
+			}
+		}
+		
+		// Scan for right of white projector space
+		for (cols = colsMax - 1; cols > colsMin - 1; cols--)
+		{
+			if (binaryColsSumArr[cols] == 1)
+			{
+				projRight = cols;
+				break;
+			}
+		}
+		
+		// Scan for top side of white projector space
+		for (rows = rowsMin; rows < rowsMax; rows++)
+		{
+			if (binaryRowsSumArr[rows] == 1)
+			{
+				projTop = rows;
+				break;
+			}			
+		}
+
+		// Scan for bottom side of white projector space
+		for (rows = rowsMax - 1; rows > rowsMin - 1; rows--)
+		{
+			if (binaryRowsSumArr[rows] == 1)
+			{
+				projBottom = rows;
+				break;
+			}
+		}		
+		
+		/*
+		// DEBUG - Print out the binary arrays
+		printf("rows: \n");
+		for (rows = rowsMin; rows < rowsMax; rows++)
+		{
+			if (binaryRowsSumArr[rows])
+				printf(".");
+			else
+				printf("0");
+		}
+		printf("\ncols: \n");
+		for (cols = colsMin; cols < colsMax; cols++)
+		{
+			if (binaryColsSumArr[cols])
+				printf(".");
+			else
+				printf("0");
+		}
+		printf("\n");
+		*/
+		
+		/*
+		// DEBUG - Print white projector space
+		printf("projLeft: %d, projRight: %d\n", projLeft, projRight);
+		printf("projTop: %d, projBottom: %d\n", projTop, projBottom);
+		
+		for (rows = projTop; rows < projBottom; rows++)
+		{
+			for (cols = projLeft; cols < projRight; cols++)
+			{
+				if (imgArr[rows][cols])
+					printf(" ");
+				else
+					printf("0");
+			}
+			printf("\n");
+		}
+		*/
+		
+		// -----------------------------------------------------------------------------------
+		// 
+		// Detect ROI black space
+		//	Using the same methods as detecting the white projector space
+		//
+		// -----------------------------------------------------------------------------------
+		*oState = 15;				// State 4 - Detect ROI
+		
+		// Calculate 10% buffer on projector space
+		projTop = projTop + (projTop >> 3);
+		projBottom = projBottom - (projBottom >> 3);
+		projLeft = projLeft + (projLeft >> 3);
+		projRight = projRight - (projRight >> 3);
+		
+		// Scan for top of ROI
+		for (rows = projTop; rows < projBottom; rows++)
+		{
+			if (binaryRowsSumArr[rows] == 0)
+			{
+				roiTop = rows;
+				break;
+			}
+		}
+		
+		// Scan for bottom of ROI
+		for (rows = projBottom - 1; rows > (projTop - 1); rows--)
+		{
+			if (binaryRowsSumArr[rows] == 0)
+			{
+				roiBottom = rows;
+				break;
+			}
+		}
+		
+		// Scan for left of ROI
+		for (cols = projLeft; cols < projRight; cols++)
+		{
+			if (binaryColsSumArr[cols] == 0)
+			{
+				roiLeft = cols;
+				break;
+			}
+		}
+		
+		for (cols = projRight - 1; cols > (projLeft - 1); cols--)
+		{
+			if (binaryColsSumArr[cols] == 0)
+			{
+				roiRight = cols;
+				break;
+			}
+		}
+	
+		/*
+		// DEBUG - Print ROI
+		printf("projLeft: %d, projRight: %d\n", projLeft, projRight);
+		printf("projTop: %d, projBottom: %d\n", projTop, projBottom);
+		
+		for (rows = roiTop; rows < roiBottom; rows++)
+		{
+			for (cols = roiLeft; cols < roiRight; cols++)
+			{
+				if (imgArr[rows][cols])
+					printf(" ");
+				else
+					printf("0");
+			}
+			printf("\n");
+		}
+		*/
+		
+		// -----------------------------------------------------------------------------------
+		// 
+		// Segmentation loop
+		//	Iterate through the digits of the ROI
+		//	# of digits ~= ROI width / ROI height
+		//	
+		//
+		// -----------------------------------------------------------------------------------
+		*oState = 31;				// State 5 - Segmentation
+				
+		numDigits = round((roiRight - roiLeft)*1.0/(roiBottom - roiTop));
+		digitWidth = (roiRight - roiLeft) / numDigits;
+		digitHeight = roiBottom - roiTop;
+				
+		for (currentDigit = 0; currentDigit < numDigits; currentDigit++)
+		{
+			// -----------------------------------------------------------------------------------
+			// 
+			// Resize the segmented digit
+			//
+			// -----------------------------------------------------------------------------------
+						
+			segmentIntensity = 0;
+			// Create a 28x28 by sampling every 1/28th of the ROI
+			for (i = 0; i < 28; i++)
+			{
+				for (j = 0; j < 28; j++)
+				{
+					x = round(i*(digitHeight - 1) / 27);
+					y = round(j*(digitWidth - 1) / 27);
+					
+					// X -> Height, doesn't change
+					// Y -> Width, the index changes as we move across the ROI
+					digitArr[i + j * 28] = imgArr[roiTop + x][roiLeft + currentDigit*digitWidth + y];
+					
+					// Try to see if image is mainly whitespace
+					segmentIntensity += digitArr[i + j * 28];
+					if (segmentIntensity > 275)
+						goto skip_digit;
+				}
+			}
+						
+			// -----------------------------------------------------------------------------------
+			// 
+			// Check if segment isn't 75%+ white pixels
+			//	It might be a bad segment, so skip
+			//
+			// -----------------------------------------------------------------------------------
+			
+			/*
+			// DEBUG - Print out the 28x28 matrix
+			printf("Print 28x28\n");
+			for (i = 0; i<28; i++)
+			{
+				for (j = 0; j<28; j++)
+				{
+					if (digitArr[i + j*28])
+						printf(" ");
+					else
+						printf("0");
+				}
+				printf("\n");
+			}
+			*/
+			
+			// -----------------------------------------------------------------------------------
+			// 
+			// Send 784x1 to Neural Network
+			//
+			// -----------------------------------------------------------------------------------
+			*oState = (*oState << 1) + 1;
+						
+			// Level 1 Weight and bias + sigmoid function
+			for (i = 0; i < 200; i++) 
+			{
+					sum = 0;
+					for (k = 0; k < 784; k++)
+					{
+						//sum += W1[i][k] * digitArr[k];
+						if (digitArr[k])
+							sum += W1[i][k];
+					}			
+					Z1[i] = 1/(1 + exp(-1*(sum + B1[i])));
+					//Z1[i] = mySigmoid(-1*(sum + B1[i]));
+			}
+			
+			// Level 2 Weight and bias + sigmoid
+			for (i = 0; i < 200; i++) 
+			{
+					sum = 0;
+					for (k = 0; k < 200; k++) 
+					{
+						sum += W2[i][k] * Z1[k];
+					}
+					Z2[i] = 1 / (1 + exp(-1*(sum + B2[i]))) ;
+					//Z2[i] = mySigmoid(-1*(sum + B2[i]));
+			}
+			
+			// Level 3
+			for (i = 0; i < 10; i++)
+			{
+					sum = 0;
+					for (k = 0; k < 200; k++) 
+					{
+						sum += W3[i][k] * Z2[k];
+					}
+					
+					if (sum > max)
+					{
+						max = sum;
+						pos = i + 1;
+					}
+			}
+			answer = answer + myPow(numDigits - (currentDigit + 1)) * myMod(pos);
+			skip_digit:
+		} // End for (currentDigit....
+		
+		*oDigits = answer;
+		printf("Guess: %d\n", answer);
+		if (RECORD_TIME) printf("Cycles: %d\n\n", getCycles() - time);
 		
 	} // While(1)
 	
