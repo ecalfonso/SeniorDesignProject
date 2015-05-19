@@ -74,13 +74,14 @@ reg		[11:0]	mCCD_B;
 reg				mDVAL;
 
 // this = that ? true : false
+wire [7:0] gray;
 
-wire [11:0] grayscale;
-assign grayscale = (mCCD_R[11:0]+mCCD_G[12:1]+mCCD_B[11:0])/3;
+wire binary;
+assign binary = (gray > iThreshold) ? 1'b1 : 1'b0;
 
-assign	oRed		=	iThreshold ? 1'b1 : 1'b0;
-assign	oGreen	=	iThreshold ? 1'b1 : 1'b0;
-assign	oBlue		=	iThreshold ? 1'b1 : 1'b0;
+assign	oRed	 = binary;
+assign	oGreen = binary;
+assign	oBlue	 = binary;
 assign	oDVAL	=	mDVAL;
 
 Line_Buffer 	u0	(	.clken(iDVAL),

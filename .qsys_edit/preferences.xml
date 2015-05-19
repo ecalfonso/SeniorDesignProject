@@ -3,7 +3,7 @@
  <debug showDebugMenu="0" />
  <systemtable filter="All Interfaces">
   <columns>
-   <connections preferredWidth="255" />
+   <connections preferredWidth="223" />
    <irq preferredWidth="47" />
    <name preferredWidth="115" />
    <inputclock preferredWidth="30" />
@@ -18,9 +18,8 @@
    <frequency preferredWidth="379" />
   </columns>
  </clocktable>
- <window width="1280" height="760" x="0" y="0" />
- <library
-   expandedCategories="Library/Verification/Simulation,Project,Library/Verification,Library,Library/Embedded Processors" />
+ <window width="640" height="760" x="640" y="0" />
+ <library expandedCategories="Library,Project" />
  <hdlexample language="VERILOG" />
  <generation block_symbol_file="1" />
 </preferences>

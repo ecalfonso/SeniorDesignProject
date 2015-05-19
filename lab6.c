@@ -3,20 +3,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-//#include "neural_network_float.h"		// Neural network 
+#include "neural_network_float.h"		// Neural network 
 //#include "neural_network_double.h"	// Neural network 
 
 
-volatile int * oStart			= (int *) 0xFF200090;
+volatile int * oStart			= (int *) 0xFF200080;
 
 volatile int * oClock			= (int *) 0xFF200010;		// Increments counter register in verilog
 
 volatile int * iImgData			= (int *) 0xFF200060;
-volatile int * iRowData			= (int *) 0xFF200080;
+volatile int * iRowData			= (int *) 0xFF200070;
 volatile int * iColData			= (int *) 0xFF200000;
 
 volatile int * oRowAddr			= (int *) 0xFF200050;
-volatile int * oColCol			= (int *) 0xFF200020;
+volatile int * oColAddr			= (int *) 0xFF200020;
 
 volatile int * oState			= (int *) 0xFF200030;		// Used to show the state with LEDs
 volatile int * oDigits			= (int *) 0xFF200040;		// Displays proposed digits to HEX modules
@@ -37,6 +37,16 @@ int myMod(int n)
 {
 	int x[11] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
 	return x[n];
+}
+
+float mySigmoid(float x)
+{
+	if (x > 5) 
+		return 0.001;
+	else if (x < -5) 
+		return 0.999;
+	else 
+		return 1/(1 + exp(x));
 }
 
 static inline unsigned int getCycles ()
@@ -142,8 +152,11 @@ int main(void){
 		// Reset the variables for next iteration
 		//
 		// -----------------------------------------------------------------------------------
-		for (i = 0; i < 640; i++) colsSumArr[i] = 0;
-		for (i = 0; i < 480; i++) rowsSumArr[i] = 0;
+		//for (i = 0; i < 640; i++) colsSumArr[i] = 0;
+		//for (i = 0; i < 480; i++) rowsSumArr[i] = 0;
+		
+		memset(colsSumArr, 0, sizeof(colsSumArr));
+		memset(rowsSumArr, 0, sizeof(rowsSumArr));
 		
 		max = -100000000;
 		answer = 0;
@@ -158,13 +171,17 @@ int main(void){
 		// -----------------------------------------------------------------------------------
 		*oState = 1;				// State 1 - Ready
 			
-		printf("Enter (1) for timing, (0) just to run: ");
-		scanf("%d", &RECORD_TIME);
+		if (RECORD_TIME != 2)
+		{
+			printf("Enter (2) for infinite loop, (1) for timing run, (0) just to run: ");
+			scanf("%d", &RECORD_TIME);
+		}
 		
 		switch (RECORD_TIME)
 		{
 			case (0):	break;
 			case (1):	break;
+			case (2):	break;
 			default:	RECORD_TIME = 0;
 		}
 		
@@ -496,8 +513,8 @@ int main(void){
 						if (digitArr[k])
 							sum += W1[i][k];
 					}			
-					Z1[i] = 1/(1 + exp(-1*(sum + B1[i])));
-					//Z1[i] = mySigmoid(-1*(sum + B1[i]));
+					//Z1[i] = 1/(1 + exp(-1*(sum + B1[i])));
+					Z1[i] = mySigmoid(-1*(sum + B1[i]));
 			}
 			
 			// Level 2 Weight and bias + sigmoid
@@ -508,8 +525,8 @@ int main(void){
 					{
 						sum += W2[i][k] * Z1[k];
 					}
-					Z2[i] = 1 / (1 + exp(-1*(sum + B2[i]))) ;
-					//Z2[i] = mySigmoid(-1*(sum + B2[i]));
+					//Z2[i] = 1 / (1 + exp(-1*(sum + B2[i]))) ;
+					Z2[i] = mySigmoid(-1*(sum + B2[i]));
 			}
 			
 			// Level 3
@@ -528,7 +545,7 @@ int main(void){
 					}
 			}
 			answer = answer + myPow(numDigits - (currentDigit + 1)) * myMod(pos);
-			skip_digit:
+			skip_digit: ;
 		} // End for (currentDigit....
 		
 		*oDigits = answer;
