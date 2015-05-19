@@ -40,16 +40,6 @@ int myMod(int n)
 	return x[n];
 }
 
-float mySigmoid(float x)
-{
-	if (x > 5) 
-		return 0.001;
-	else if (x < -5) 
-		return 0.999;
-	else 
-		return 1/(1 + exp(x));
-}
-
 static inline unsigned int getCycles ()
 {
   unsigned int cycleCount;
@@ -534,8 +524,7 @@ int main(void){
 						if (digitArr[k])
 							sum += W1[i][k];
 					}			
-					//Z1[i] = 1/(1 + exp(-1*(sum + B1[i])));
-					Z1[i] = mySigmoid(-1*(sum + B1[i]));
+					Z1[i] = 1/(1 + exp(-1*(sum + B1[i])));
 			}
 			
 			// Level 2 Weight and bias + sigmoid
@@ -546,8 +535,7 @@ int main(void){
 					{
 						sum += W2[i][k] * Z1[k];
 					}
-					//Z2[i] = 1 / (1 + exp(-1*(sum + B2[i]))) ;
-					Z2[i] = mySigmoid(-1*(sum + B2[i]));
+					Z2[i] = 1 / (1 + exp(-1*(sum + B2[i]))) ;
 			}
 			
 			// Level 3
