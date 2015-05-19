@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "neural_network_float.h"		// Neural network 
+//#include "neural_network_float.h"		// Neural network 
+#include "neural_network_float_20x20.h"		// Neural network 
 //#include "neural_network_double.h"	// Neural network 
 
 
@@ -116,8 +117,8 @@ int main(void){
 	int digitWidth = 0;
 	int digitHeight = 0;
 	int segmentIntensity = 0;			// Accumulator to check if the segment isn't all white pixels
-	int digitArr[784] = { 0 };
-	//int digitArr[400] = { 0 };
+	//int digitArr[784] = { 0 };
+	int digitArr[400] = { 0 };
 	
 	
 	// Neural network variables
@@ -454,7 +455,8 @@ int main(void){
 			// -----------------------------------------------------------------------------------
 						
 			segmentIntensity = 0;
-			// Create a 28x28 by sampling every 1/28th of the ROI
+			
+			/* Create a 28x28 by sampling every 1/28th of the ROI
 			for (i = 0; i < 28; i++)
 			{
 				for (j = 0; j < 28; j++)
@@ -469,6 +471,25 @@ int main(void){
 					// Try to see if image is mainly whitespace
 					segmentIntensity += digitArr[i + j * 28];
 					if (segmentIntensity > 275)
+						goto skip_digit;
+				}
+			}//*/
+			
+			// Create a 20x20 by sampling every 1/28th of the ROI
+			for (i = 0; i < 20; i++)
+			{
+				for (j = 0; j < 20; j++)
+				{
+					x = round(i*(digitHeight - 1) / 19);
+					y = round(j*(digitWidth - 1) / 19);
+					
+					// X -> Height, doesn't change
+					// Y -> Width, the index changes as we move across the ROI
+					digitArr[i + j * 19] = imgArr[roiTop + x][roiLeft + currentDigit*digitWidth + y];
+					
+					// Try to see if image is mainly whitespace
+					segmentIntensity += digitArr[i + j * 20];
+					if (segmentIntensity > 170)
 						goto skip_digit;
 				}
 			}
@@ -507,7 +528,7 @@ int main(void){
 			for (i = 0; i < 200; i++) 
 			{
 					sum = 0;
-					for (k = 0; k < 784; k++)
+					for (k = 0; k < 400; k++)
 					{
 						//sum += W1[i][k] * digitArr[k];
 						if (digitArr[k])
