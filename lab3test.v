@@ -159,7 +159,9 @@ end
 
 // Decompress image data 
 wire [9:0] VGADataIn;
-assign VGADataIn = Read_DATA2[0] ? 10'b1111111111 : 10'b0000000000;
+//assign VGADataIn = Read_DATA2[0] ? 10'b1111111111 : 10'b0000000000;
+assign VGADataIn = 10'b0000000000;
+
 
 VGA_Controller		u1	(	//	Host Side
 							.oRequest(Read),				// Read Request is sent to the SDRAM when the VGA pixel scan is at the correct x and y pixel location in the active area
@@ -247,6 +249,37 @@ bin2dec 					(
 							.Ones(dig1)
 						);
 
+// Shift register to buffer pixel data
+rightShiftReg32b (
+							.iData(sCCD_B[0]),
+							.oData(shift_pixel),
+							.iCLK(CCD_PIXCLK),
+							.iRST(DLY_RST_1),
+						);
+						
+wire [31:0] shift_pixel;
+					
+// Shift register to delay DVAL signal	
+rightShiftReg32b (
+							.iData(sCCD_DVAL),
+							.oData(shift_DVAL),
+							.iCLK(CCD_PIXCLK),
+							.iRST(DLY_RST_1),
+						);
+						
+wire [31:0] shift_DVAL;
+
+// Counter to divide CCD_PIXCLK by 32 cycles
+
+reg [4:0] shift_clk;
+
+initial shift_clk <= 16;
+always@(negedge CCD_PIXCLK or negedge DLY_RST_1)
+begin
+	if (!DLY_RST_1) 	shift_clk <= 16;
+	else					shift_clk <= shift_clk + 1;
+end
+						
 Sdram_Control_4Port	u7	(	
 							//	HOST Side
 						   .RESET_N(1'b1),
@@ -254,34 +287,39 @@ Sdram_Control_4Port	u7	(
 
 							//	FIFO Write Side 1
 							//.WR1_DATA({1'b0,sCCD_G[11:7],sCCD_B[11:2]}),
-							.WR1_DATA({15'b000000000000000,sCCD_B[0]}),
-							.WR1(sCCD_DVAL),
+							//.WR1_DATA({15'b000000000000000,sCCD_B[0]}),
+							.WR1_DATA(shift_pixel[15:0]),
+							//.WR1(sCCD_DVAL),
+							.WR1(shift_DVAL[0]),
 							.WR1_ADDR(0),					// Memory start for one section of the memory
-							.WR1_MAX_ADDR(640*480),
+							.WR1_MAX_ADDR(640*480/32),
 							.WR1_LENGTH(256),
 							//.WR1_LENGTH(1),
 							.WR1_LOAD(!DLY_RST_0),
-							.WR1_CLK(~CCD_PIXCLK),		// This clock is directly from the CCD Camera Module, the Camera controls the write to memory
+							//.WR1_CLK(~CCD_PIXCLK),		// This clock is directly from the CCD Camera Module, the Camera controls the write to memory
+							.WR1_CLK(shift_clk[4]),
 							// CCD data is written on the falling edge of the CCD_PIXCLK
 
 							//	FIFO Write Side 2
 							//.WR2_DATA(	{1'b0,sCCD_G[6:2],sCCD_R[11:2]}),
-							.WR2_DATA({15'b000000000000000,sCCD_R[0]}),
-							.WR2(sCCD_DVAL),
+							//.WR2_DATA({15'b000000000000000,sCCD_R[0]}),
+							.WR2_DATA(shift_pixel[31:16]),
+							//.WR2(sCCD_DVAL),
+							.WR2(shift_DVAL[0]),
 							.WR2_ADDR(22'h100000),		// Memory start for the second section of memory - why can we not write data into one memory block?
-							.WR2_MAX_ADDR(22'h100000+640*480),
+							.WR2_MAX_ADDR(22'h100000+(640*480/32)),
 							.WR2_LENGTH(256),
 							//.WR2_LENGTH(1),
 							.WR2_LOAD(!DLY_RST_0),
-							.WR2_CLK(~CCD_PIXCLK),
-
+							//.WR2_CLK(~CCD_PIXCLK),
+							.WR2_CLK(shift_clk[4]),
 
 							//	FIFO Read Side 1
 						   .RD1_DATA(Read_DATA1),
 				        	//.RD1(Read),
 							.RD1(1),			// Always ready since we control the clock
 				        	.RD1_ADDR(0),
-							.RD1_MAX_ADDR(640*480),
+							.RD1_MAX_ADDR(640*480/32),
 							.RD1_LENGTH(256),
 							//.RD1_LENGTH(1),
 							.RD1_LOAD(!DLY_RST_0),
@@ -290,13 +328,15 @@ Sdram_Control_4Port	u7	(
 							
 							//	FIFO Read Side 2
 						   .RD2_DATA(Read_DATA2),
-							.RD2(Read),
+							//.RD2(Read),
+							.RD2(1),
 							.RD2_ADDR(22'h100000), // Memory start address
-							.RD2_MAX_ADDR(22'h100000+640*480),	// Allocate enough space for whole 640 x 480 display
+							.RD2_MAX_ADDR(22'h100000+(640*480/32)),	// Allocate enough space for whole 640 x 480 display
 							.RD2_LENGTH(256),	// 8 bits long data storage
 							//.RD2_LENGTH(1),
 				        	.RD2_LOAD(!DLY_RST_0),
-							.RD2_CLK(~VGA_CTRL_CLK),
+							//.RD2_CLK(~VGA_CTRL_CLK),
+							.RD2_CLK(reg_HPS_Clk),
 							
 							//	SDRAM Side - Initialize the SDRAM - Can only initialize one per design
 							// Qsys does not allow the allocation of more than one SDRAM connected to the same DE1-SOC DRAM pin
@@ -331,6 +371,14 @@ reg reg_HPS_Clk;
 initial reg_HPS_Clk = 0;
 always@(HPS_CLK) reg_HPS_Clk <= HPS_CLK;
 
+reg switch;
+initial switch = 0;
+always@(posedge reg_HPS_Clk)
+begin
+	if (!switch) 
+	switch <= ~switch;
+end
+
 wire [31:0] HPS_Digits;
 wire [9:0] HPS_State;
 		  
@@ -363,10 +411,41 @@ wire [9:0] HPS_State;
 		  .startsignal_export       (HPS_Capture_Start),       //         startsignal.export
         .hps_clk_out_export       (HPS_CLK),       //         hps_clk_out.export
 		  
-        //.imgdata_in_export        (imgDataIn),        //          imgdata_in.export
-		  .imgdata_in_export        (Read_DATA1[0]),        //          imgdata_in.export
-        .row_data_in_export       (rowDataIn),       //         row_data_in.export
-        //.col_data_in_export       (colDataIn),
+        .row_data_in_export		(rowDataIn),       //         row_data_in.export
+        .col_data_in_export		(colDataIn),
+		  
+		  .imgdata_in0_export       (Read_DATA1[0]),     
+        .imgdata_in1_export       (Read_DATA1[1]),     
+        .imgdata_in2_export       (Read_DATA1[2]),     
+        .imgdata_in3_export       (Read_DATA1[3]),     
+        .imgdata_in4_export       (Read_DATA1[4]),     
+        .imgdata_in5_export       (Read_DATA1[5]),     
+        .imgdata_in6_export       (Read_DATA1[6]),     
+        .imgdata_in7_export       (Read_DATA1[7]),     
+        .imgdata_in8_export       (Read_DATA1[8]),     
+        .imgdata_in9_export      (Read_DATA1[9]),      
+        .imgdata_in10_export      (Read_DATA1[10]),    
+        .imgdata_in11_export      (Read_DATA1[11]),    
+        .imgdata_in12_export      (Read_DATA1[12]),    
+        .imgdata_in13_export      (Read_DATA1[13]),    
+        .imgdata_in14_export      (Read_DATA1[14]),    
+        .imgdata_in15_export      (Read_DATA1[15]),    
+        .imgdata_in16_export      (Read_DATA2[0]),     
+        .imgdata_in17_export      (Read_DATA2[1]),     
+        .imgdata_in18_export      (Read_DATA2[2]),     
+        .imgdata_in19_export      (Read_DATA2[3]),     
+        .imgdata_in20_export      (Read_DATA2[4]),     
+        .imgdata_in21_export      (Read_DATA2[5]),     
+        .imgdata_in22_export      (Read_DATA2[6]),     
+        .imgdata_in23_export      (Read_DATA2[7]),     
+        .imgdata_in24_export      (Read_DATA2[8]),     
+        .imgdata_in25_export      (Read_DATA2[9]),     
+        .imgdata_in26_export      (Read_DATA2[10]),    
+        .imgdata_in27_export      (Read_DATA2[11]),    
+        .imgdata_in28_export      (Read_DATA2[12]),    
+        .imgdata_in29_export      (Read_DATA2[13]),    
+        .imgdata_in30_export      (Read_DATA2[14]),  
+		  .imgdata_in31_export      (Read_DATA2[15]),   
 
         .row_addr_out_export      (HPS_Row_Addr),      //        row_addr_out.export
         .col_addr_out_export      (HPS_Col_Addr),      //        col_addr_out.export
