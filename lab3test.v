@@ -140,9 +140,9 @@ assign	GPIO_1[17]	=	DLY_RST_1;
 
 assign	VGA_CLK		=	VGA_CTRL_CLK;
 
-always@(posedge CLOCK_50)	rClk	<=	~rClk;
+//always@(posedge CLOCK_50)	rClk	<=	~rClk;
 
-assign CCD_MCLK = rClk[0]; // 25MHZ
+//assign CCD_MCLK = rClk[0]; // 25MHZ
 
 assign LEDR			= HPS_State;	// Use LEDs to show curret state of HPS during processing
 
@@ -161,7 +161,6 @@ end
 wire [9:0] VGADataIn;
 //assign VGADataIn = Read_DATA2[0] ? 10'b1111111111 : 10'b0000000000;
 assign VGADataIn = 10'b0000000000;
-
 
 VGA_Controller		u1	(	//	Host Side
 							.oRequest(Read),				// Read Request is sent to the SDRAM when the VGA pixel scan is at the correct x and y pixel location in the active area
@@ -385,7 +384,7 @@ wire [9:0] HPS_State;
 	mysystem u0 (
          .sdram_clk_clk                (sdram_ctrl_clk),                //             sdram_clk.clk
         .dram_clk_clk                 (DRAM_CLK),                 //              dram_clk.clk
-        //.d5m_clk_clk                  (CCD_MCLK),                  //               d5m_clk.clk
+        .d5m_clk_clk                  (CCD_MCLK),                  //               d5m_clk.clk
         .vga_clk_clk                  (VGA_CTRL_CLK),                   //               vga_clk.clk
         .system_pll_0_refclk_clk      (CLOCK_50),      //   system_pll_0_refclk.clk
         .system_pll_0_reset_reset     (1'b0),      //    system_pll_0_reset.reset
