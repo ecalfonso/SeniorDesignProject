@@ -74,11 +74,11 @@ reg		[11:0]	mCCD_B;
 reg				mDVAL;
 
 // this = that ? true : false
-wire [7:0] gray;
+wire [11:0] gray;
 assign gray = (mCCD_R[11:0]>>2) + (mCCD_R[11:0]>>5) + (mCCD_G[12:1]>>1) + (mCCD_G[12:1]>>4) + (mCCD_B[11:0]>>4) + (mCCD_B[11:0]>>5);
 
 wire binary;
-assign binary = (gray > iThreshold) ? 1'b1 : 1'b0;
+assign binary = (gray > {iThreshold, 2'b00}) ? 1'b1 : 1'b0;
 
 assign	oRed	 = binary;
 assign	oGreen = binary;
