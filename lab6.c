@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "neural_network_float.h"		// Neural network 
+//#include "neural_network_float.h"		// Neural network 
 //#include "neural_network_double.h"	// Neural network 
 
 
@@ -380,11 +380,12 @@ int main(void){
 		printf("\n");
 		*/
 		
-		/*
+		
 		// DEBUG - Print white projector space
 		printf("projLeft: %d, projRight: %d\n", projLeft, projRight);
 		printf("projTop: %d, projBottom: %d\n", projTop, projBottom);
 		
+		/*
 		for (rows = projTop; rows < projBottom; rows++)
 		{
 			for (cols = projLeft; cols < projRight; cols++)
@@ -398,198 +399,7 @@ int main(void){
 		}
 		*/
 		
-		// -----------------------------------------------------------------------------------
-		// 
-		// Detect ROI black space
-		//	Using the same methods as detecting the white projector space
-		//
-		// -----------------------------------------------------------------------------------
-		*oState = 15;				// State 4 - Detect ROI
-		
-		// Calculate 10% buffer on projector space
-		projTop = projTop + (projTop >> 3);
-		projBottom = projBottom - (projBottom >> 3);
-		projLeft = projLeft + (projLeft >> 3);
-		projRight = projRight - (projRight >> 3);
-		
-		// Scan for top of ROI
-		for (rows = projTop; rows < projBottom; rows++)
-		{
-			if (binaryRowsSumArr[rows] == 0)
-			{
-				roiTop = rows;
-				break;
-			}
-		}
-		
-		// Scan for bottom of ROI
-		for (rows = projBottom - 1; rows > (projTop - 1); rows--)
-		{
-			if (binaryRowsSumArr[rows] == 0)
-			{
-				roiBottom = rows;
-				break;
-			}
-		}
-		
-		// Scan for left of ROI
-		for (cols = projLeft; cols < projRight; cols++)
-		{
-			if (binaryColsSumArr[cols] == 0)
-			{
-				roiLeft = cols;
-				break;
-			}
-		}
-		
-		for (cols = projRight - 1; cols > (projLeft - 1); cols--)
-		{
-			if (binaryColsSumArr[cols] == 0)
-			{
-				roiRight = cols;
-				break;
-			}
-		}
-	
-		/*
-		// DEBUG - Print ROI
-		printf("projLeft: %d, projRight: %d\n", projLeft, projRight);
-		printf("projTop: %d, projBottom: %d\n", projTop, projBottom);
-		
-		for (rows = roiTop; rows < roiBottom; rows++)
-		{
-			for (cols = roiLeft; cols < roiRight; cols++)
-			{
-				if (imgArr[rows][cols])
-					printf(" ");
-				else
-					printf("0");
-			}
-			printf("\n");
-		}
-		*/
-		
-		// -----------------------------------------------------------------------------------
-		// 
-		// Segmentation loop
-		//	Iterate through the digits of the ROI
-		//	# of digits ~= ROI width / ROI height
-		//	
-		//
-		// -----------------------------------------------------------------------------------
-		*oState = 31;				// State 5 - Segmentation
-				
-		numDigits = round((roiRight - roiLeft)*1.0/(roiBottom - roiTop));
-		numDigits = myMin(numDigits);
-		digitWidth = (roiRight - roiLeft) / numDigits;
-		digitHeight = roiBottom - roiTop;
-				
-		for (currentDigit = 0; currentDigit < numDigits; currentDigit++)
-		{
-			// -----------------------------------------------------------------------------------
-			// 
-			// Resize the segmented digit
-			//
-			// -----------------------------------------------------------------------------------
-						
-			segmentIntensity = 0;
-			// Create a 28x28 by sampling every 1/28th of the ROI
-			for (i = 0; i < 28; i++)
-			{
-				for (j = 0; j < 28; j++)
-				{
-					x = round(i*(digitHeight - 1) / 27);
-					y = round(j*(digitWidth - 1) / 27);
-					
-					// X -> Height, doesn't change
-					// Y -> Width, the index changes as we move across the ROI
-					digitArr[i + j * 28] = imgArr[roiTop + x][roiLeft + currentDigit*digitWidth + y];
-					
-					// Try to see if image is mainly whitespace
-					segmentIntensity += digitArr[i + j * 28];
-					if (segmentIntensity > 275)
-						goto skip_digit;
-				}
-			}
-						
-			// -----------------------------------------------------------------------------------
-			// 
-			// Check if segment isn't 75%+ white pixels
-			//	It might be a bad segment, so skip
-			//
-			// -----------------------------------------------------------------------------------
-			
-			/*
-			// DEBUG - Print out the 28x28 matrix
-			printf("Print 28x28\n");
-			for (i = 0; i<28; i++)
-			{
-				for (j = 0; j<28; j++)
-				{
-					if (digitArr[i + j*28])
-						printf(" ");
-					else
-						printf("0");
-				}
-				printf("\n");
-			}
-			*/
-			
-			// -----------------------------------------------------------------------------------
-			// 
-			// Send 784x1 to Neural Network
-			//
-			// -----------------------------------------------------------------------------------
-			*oState = (*oState << 1) + 1;
-						
-			// Level 1 Weight and bias + sigmoid function
-			for (i = 0; i < 200; i++) 
-			{
-					sum = 0;
-					for (k = 0; k < 784; k++)
-					{
-						//sum += W1[i][k] * digitArr[k];
-						if (digitArr[k])
-							sum += W1[i][k];
-					}			
-					Z1[i] = 1/(1 + exp(-1*(sum + B1[i])));
-					//Z1[i] = mySigmoid(-1*(sum + B1[i]));
-			}
-			
-			// Level 2 Weight and bias + sigmoid
-			for (i = 0; i < 200; i++) 
-			{
-					sum = 0;
-					for (k = 0; k < 200; k++) 
-					{
-						sum += W2[i][k] * Z1[k];
-					}
-					Z2[i] = 1 / (1 + exp(-1*(sum + B2[i]))) ;
-					//Z2[i] = mySigmoid(-1*(sum + B2[i]));
-			}
-			
-			// Level 3
-			for (i = 0; i < 10; i++)
-			{
-					sum = 0;
-					for (k = 0; k < 200; k++) 
-					{
-						sum += W3[i][k] * Z2[k];
-					}
-					
-					if (sum > max)
-					{
-						max = sum;
-						pos = i + 1;
-					}
-			}
-			answer = answer + myPow(numDigits - (currentDigit + 1)) * myMod(pos);
-			skip_digit: ;
-		} // End for (currentDigit....
-		
 		time = getCycles() - time;
-		*oDigits = answer;
-		printf("Guess: %d\n", answer);
 		if (RECORD_TIME) printf("Cycles: %d\n\n", time);
 		
 	} // While(1)

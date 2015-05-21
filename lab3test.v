@@ -214,14 +214,57 @@ RAW2RGB				u4	(
 							.iX_Cont(X_Cont),
 							.iY_Cont(Y_Cont)
 						);
-
-wire [3:0] dig6;
-wire [3:0] dig5;
-wire [3:0] dig4;
-wire [3:0] dig3;
-wire [3:0] dig2;
-wire [3:0] dig1;
 						
+//=======================================================
+//  FSM ROI Finder - 1 hot
+//		state0 - 001	Look for first white
+//		state1 - 010	Look for first black
+//		state2 - 100	Save current ROW as possible ROI beginning
+//=======================================================
+
+reg [31:0] 	roi_top;
+reg [2:0] 	roi_state;
+reg [127:0] line_buff;
+
+initial begin
+	roi_state 	<= 3'b001;
+	roi_top 		<= 0;
+	line_buff	<= 128'h00000000000000000000000000000000; // Zero out the buffer
+end
+	
+always@(posedge CCD_PIXCLK or negedge DLY_RST_1) begin
+	if (!DLY_RST_1) begin
+		roi_state <= 3'b001;
+		roi_top 		<= 0;
+		line_buff	<= 128'h00000000000000000000000000000000; // Zero out the buffer
+	end
+	else begin
+		case (roi_state)
+			3'b001: begin
+				if (X_Cont == 0) begin
+					line_buff <= 128'h00000000000000000000000000000000;	// Reset line buffer
+				end
+				
+				line_buff <= {line_buff[126:0], sCCD_B[0]};	// Shift the pixels into a buffer
+				
+				if (Y_Cont > 50 && Y_Cont < 910 && line_buff == 128'hFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF) begin // If the line_buff == all 1s, we found the whitespace
+					roi_state <= 3'b010;
+					roi_top <= Y_Cont;
+				end
+			end // End case 001
+			3'b010: begin
+				if (Y_Cont == 960) roi_state <= 3'b001;
+			end // End case 010
+			3'b100: begin
+		
+			end // End case 100
+			default: roi_state <= 3'b001;
+		endcase
+	end
+end
+
+
+
 SEG7_LUT_8 			u5	(	
 							.oSEG0(HEX0),
 							.oSEG1(HEX1),
@@ -233,9 +276,17 @@ SEG7_LUT_8 			u5	(
 							.oSEG7(),
 							.iDIG ({dig6, dig5, dig4, dig3, dig2, dig1})		// Show the proposed digits on the HEX displays
 						);
+
+wire [3:0] dig6;
+wire [3:0] dig5;
+wire [3:0] dig4;
+wire [3:0] dig3;
+wire [3:0] dig2;
+wire [3:0] dig1;
 						
 bin2dec 					(
-							.iData (HPS_Digits),
+							//.iData (HPS_Digits),
+							.iData(roi_top),
 							.HunThousand(dig6),
 							.TenThousand(dig5),
 							.Thousands(dig4),
