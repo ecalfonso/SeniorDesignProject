@@ -7,19 +7,34 @@
 //#include "neural_network_double.h"	// Neural network 
 
 
-volatile int * oStart			= (int *) 0xFF200080;
+volatile int * oStart			= (int *) 0xFF200170;
+volatile int * oClock			= (int *) 0xFF200100;		// Increments counter register in verilog
+volatile int * oState			= (int *) 0xFF200120;		// Used to show the state with LEDs
+volatile int * oDigits			= (int *) 0xFF200130;		// Displays proposed digits to HEX modules
 
-volatile int * oClock			= (int *) 0xFF200010;		// Increments counter register in verilog
+volatile int * oRowAddr			= (int *) 0xFF200140;
+volatile int * oColAddr			= (int *) 0xFF200110;
 
-volatile int * iImgData			= (int *) 0xFF200060;
-volatile int * iRowData			= (int *) 0xFF200070;
-volatile int * iColData			= (int *) 0xFF200000;
+volatile int * iRowData			= (int *) 0xFF200160;
+volatile int * iColData			= (int *) 0xFF2000F0;
 
-volatile int * oRowAddr			= (int *) 0xFF200050;
-volatile int * oColAddr			= (int *) 0xFF200020;
+volatile int * iImgData0			= (int *) 0xFF200150;
+//volatile int * iImgData1			= (int *) 0xFF2000E0;
+volatile int * iImgData2			= (int *) 0xFF2000D0;
+//volatile int * iImgData3			= (int *) 0xFF2000C0;
+volatile int * iImgData4			= (int *) 0xFF2000B0;
+//volatile int * iImgData5			= (int *) 0xFF2000A0;
+volatile int * iImgData6			= (int *) 0xFF200090;
+//volatile int * iImgData7			= (int *) 0xFF200080;
 
-volatile int * oState			= (int *) 0xFF200030;		// Used to show the state with LEDs
-volatile int * oDigits			= (int *) 0xFF200040;		// Displays proposed digits to HEX modules
+volatile int * iImgData8			= (int *) 0xFF200070;
+//volatile int * iImgData9			= (int *) 0xFF200060;
+volatile int * iImgData10			= (int *) 0xFF200050;
+//volatile int * iImgData11			= (int *) 0xFF200040;
+volatile int * iImgData12			= (int *) 0xFF200030;
+//volatile int * iImgData13			= (int *) 0xFF200020;
+volatile int * iImgData14			= (int *) 0xFF200010;
+//volatile int * iImgData15			= (int *) 0xFF200000;
 
 void Clock(void)
 {
@@ -37,6 +52,12 @@ int myMod(int n)
 {
 	int x[11] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
 	return x[n];
+}
+
+int myMin(int n)
+{
+	if (n > 5) 	return 5;
+	else		return n;
 }
 
 float mySigmoid(float x)
@@ -119,7 +140,6 @@ int main(void){
 	int digitArr[784] = { 0 };
 	//int digitArr[400] = { 0 };
 	
-	
 	// Neural network variables
 	float sum;
 	float Z1[200];
@@ -146,7 +166,7 @@ int main(void){
 	volatile unsigned int time;
 
 	while(1)
-	{
+	{	
 		// -----------------------------------------------------------------------------------
 		// 
 		// Reset the variables for next iteration
@@ -163,7 +183,7 @@ int main(void){
 		
 		rowsSumMax = 0;
 		colsSumMax = 0;
-		
+
 		// -----------------------------------------------------------------------------------
 		// 
 		// Prompt user to begin
@@ -200,13 +220,31 @@ int main(void){
 			
 		for (rows = 0; rows < 480; rows++)	// 640x480
 		{	
-			for(cols = 0; cols < 640; cols++)
+			for(cols = 0; cols < 640; cols += 8)
 			{
 				Clock();
-				imgArr[rows][cols] = *iImgData;		// 0's and 1's are determined in verilog
+				imgArr[rows][cols] = *iImgData0;
+				imgArr[rows][cols+1] = *iImgData2;
+				imgArr[rows][cols+2] = *iImgData4;
+				imgArr[rows][cols+3] = *iImgData6;
+				imgArr[rows][cols+4] = *iImgData8;
+				imgArr[rows][cols+5] = *iImgData10;
+				imgArr[rows][cols+6] = *iImgData12;
+				imgArr[rows][cols+7] = *iImgData14;
+				
+				/*				
+				imgArr[rows][cols] = *iImgData1;
+				imgArr[rows][cols+1] = *iImgData3;
+				imgArr[rows][cols+2] = *iImgData5;
+				imgArr[rows][cols+3] = *iImgData7;
+				imgArr[rows][cols+4] = *iImgData9;
+				imgArr[rows][cols+5] = *iImgData11;
+				imgArr[rows][cols+6] = *iImgData13;
+				imgArr[rows][cols+7] = *iImgData15;
+				*/
 			}
 		}
-				
+		
 		// Restart Clock because we're done with the SDRAM
 		*oStart = 1;
 		
@@ -442,7 +480,7 @@ int main(void){
 		*oState = 31;				// State 5 - Segmentation
 				
 		numDigits = round((roiRight - roiLeft)*1.0/(roiBottom - roiTop));
-		numDigits = min(numDigits, 5);
+		numDigits = myMin(numDigits);
 		digitWidth = (roiRight - roiLeft) / numDigits;
 		digitHeight = roiBottom - roiTop;
 				
@@ -549,9 +587,10 @@ int main(void){
 			skip_digit: ;
 		} // End for (currentDigit....
 		
+		time = getCycles() - time;
 		*oDigits = answer;
 		printf("Guess: %d\n", answer);
-		if (RECORD_TIME) printf("Cycles: %d\n\n", getCycles() - time);
+		if (RECORD_TIME) printf("Cycles: %d\n\n", time);
 		
 	} // While(1)
 	
