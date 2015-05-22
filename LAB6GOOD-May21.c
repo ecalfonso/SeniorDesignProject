@@ -481,7 +481,7 @@ int main(void){
 				
 		numDigits = round((roiRight - roiLeft)*1.0/(roiBottom - roiTop));
 		numDigits = myMin(numDigits);
-		digitWidth = (roiRight - roiLeft) / numDigits;
+		digitWidth = round((roiRight - roiLeft)*1.0/ numDigits);
 		digitHeight = roiBottom - roiTop;
 				
 		for (currentDigit = 0; currentDigit < numDigits; currentDigit++)

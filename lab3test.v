@@ -113,7 +113,7 @@ wire		[9:0]		oVGA_B;   				//	VGA Blue[9:0]
 wire [9:0] HPS_R;
 wire [9:0] HPS_G;
 wire [9:0] HPS_B;
-wire HPS_Capture_Start;	
+wire HPS_Capture_Start;
 wire HPS_CLK;
 //=======================================================
 //  Structural coding
@@ -216,54 +216,80 @@ RAW2RGB				u4	(
 						);
 						
 //=======================================================
-//  FSM ROI Finder - 1 hot
-//		state0 - 001	Look for first white
-//		state1 - 010	Look for first black
-//		state2 - 100	Save current ROW as possible ROI beginning
+//  FSM ROI Finder
 //=======================================================
 
 reg [31:0] 	roi_top;
-reg [2:0] 	roi_state;
+reg [31:0]	roi_bot;
+reg [31:0]	roi_left;
+reg [31:0]	roi_right;
+reg [4:0] 	roi_state;
 reg [127:0] line_buff;
 
 initial begin
-	roi_state 	<= 3'b001;
+	roi_state 	<= 0;
 	roi_top 		<= 0;
 	line_buff	<= 128'h00000000000000000000000000000000; // Zero out the buffer
 end
 	
 always@(posedge CCD_PIXCLK or negedge DLY_RST_1) begin
 	if (!DLY_RST_1) begin
-		roi_state <= 3'b001;
+		roi_state <= 0;
 		roi_top 		<= 0;
 		line_buff	<= 128'h00000000000000000000000000000000; // Zero out the buffer
 	end
 	else begin
 		case (roi_state)
-			3'b001: begin
+			0: begin	// Looking for proj whitespace
 				if (X_Cont == 0) begin
 					line_buff <= 128'h00000000000000000000000000000000;	// Reset line buffer
 				end
+				else begin
+					line_buff <= {line_buff[126:0], sCCD_B[0]};	// Shift the pixels into a buffer
 				
-				line_buff <= {line_buff[126:0], sCCD_B[0]};	// Shift the pixels into a buffer
-				
-				if (Y_Cont > 50 && Y_Cont < 910 && line_buff == 128'hFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF) begin // If the line_buff == all 1s, we found the whitespace
-					roi_state <= 3'b010;
-					roi_top <= Y_Cont;
+					if (Y_Cont > 50 && Y_Cont < 910 && line_buff == 128'hFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF) begin // If the line_buff == all 1s, we found the whitespace
+						roi_state <= 1;
+					end
 				end
-			end // End case 001
-			3'b010: begin
-				if (Y_Cont == 960) roi_state <= 3'b001;
-			end // End case 010
-			3'b100: begin
-		
-			end // End case 100
-			default: roi_state <= 3'b001;
+			end // End 0
+			1: begin	// Looking for leftside of proj whitespace
+				if (X_Cont == 0) begin
+					line_buff <= 128'h00000000000000000000000000000000;	// Reset line buffer
+				end
+				else begin
+					line_buff <= {line_buff[126:0], sCCD_B[0]};	// Shift the pixels into a buffer
+				
+					if (Y_Cont > 50 && Y_Cont < 910 && X_Cont < 640 && line_buff == 128'hFFFFFFFFFFFFFFFF0000000000000000) begin // Try to find the ROI
+						roi_state <= 2;
+						roi_top <= Y_Cont;
+						roi_left <= X_Cont;
+					end
+				end
+				
+				if (Y_Cont == 960) roi_state <= 0;
+			end // End 1
+			2: begin
+				if (X_Cont == 0) begin
+					line_buff <= 128'h00000000000000000000000000000000;	// Reset line buffer
+				end
+				else begin
+					line_buff <= {line_buff[126:0], sCCD_B[0]};	// Shift the pixels into a buffer
+				
+					if (Y_Cont > 50 && Y_Cont < 910 && X_Cont > 640 && line_buff == 128'h0000000000000000FFFFFFFFFFFFFFFF) begin // Try to find the ROI
+						roi_state <= 3;
+						roi_right <= X_Cont;
+					end
+				end
+				
+				if (Y_Cont == 960) roi_state <= 0;
+			end
+			3: begin	// Wait out the rest of the image
+				if (Y_Cont == 960) roi_state <= 0;
+			end // End 4
+			default: roi_state <= 0;
 		endcase
 	end
 end
-
-
 
 SEG7_LUT_8 			u5	(	
 							.oSEG0(HEX0),
@@ -274,7 +300,7 @@ SEG7_LUT_8 			u5	(
 							.oSEG5(HEX5),
 							.oSEG6(),
 							.oSEG7(),
-							.iDIG ({dig6, dig5, dig4, dig3, dig2, dig1})		// Show the proposed digits on the HEX displays
+							.iDIG ({dig03, dig02, dig01, dig3, dig2, dig1})		// Show the proposed digits on the HEX displays
 						);
 
 wire [3:0] dig6;
@@ -286,13 +312,31 @@ wire [3:0] dig1;
 						
 bin2dec 					(
 							//.iData (HPS_Digits),
-							.iData(roi_top),
+							.iData(roi_right),
 							.HunThousand(dig6),
 							.TenThousand(dig5),
 							.Thousands(dig4),
 							.Hundreds(dig3),
 							.Tens(dig2),
 							.Ones(dig1)
+						);
+
+wire [3:0] dig06;
+wire [3:0] dig05;
+wire [3:0] dig04;
+wire [3:0] dig03;
+wire [3:0] dig02;
+wire [3:0] dig01;
+						
+bin2dec 					(
+							//.iData (HPS_Digits),
+							.iData(roi_left),
+							.HunThousand(dig06),
+							.TenThousand(dig05),
+							.Thousands(dig04),
+							.Hundreds(dig03),
+							.Tens(dig02),
+							.Ones(dig01)
 						);
 						
 //=======================================================
@@ -327,7 +371,7 @@ end
 
 Sdram_Control_4Port	u7	(	
 							//	HOST Side
-						   .RESET_N(1'b1),
+						   .RESET_N(1),
 							.CLK(sdram_ctrl_clk),
 
 							//	FIFO Write Side 1
@@ -446,8 +490,8 @@ wire [9:0] HPS_State;
 		  .startsignal_export       (HPS_Capture_Start),       //         startsignal.export
         .hps_clk_out_export       (HPS_CLK),       //         hps_clk_out.export
 		  
-        .row_data_in_export       (rowDataIn),       //         row_data_in.export
-        //.col_data_in_export       (colDataIn),
+		  .hps_state_out_export     (HPS_State),     //       hps_state_out.export
+        .hps_digits_out_export    (HPS_Digits),    //      hps_digits_out.export
 		  
 		  .imgdata_in0_export       (Read_DATA1[0]),       //         imgdata_in0.export
 		  //.imgdata_in1_export       (Read_DATA1[1]),       //         imgdata_in1.export
@@ -466,11 +510,10 @@ wire [9:0] HPS_State;
         .imgdata_in14_export      (Read_DATA1[14]),      //        imgdata_in14.export
         //.imgdata_in15_export      (Read_DATA1[15]),      //        imgdata_in15.export
 
-        .row_addr_out_export      (HPS_Row_Addr),      //        row_addr_out.export
-        .col_addr_out_export      (HPS_Col_Addr),      //        col_addr_out.export
-		  
-        .hps_state_out_export     (HPS_State),     //       hps_state_out.export
-        .hps_digits_out_export    (HPS_Digits),    //      hps_digits_out.export
+		  .roi_top_in_export        ({1'b0,roi_top[31:1]}),        //          roi_top_in.export
+		  .roi_left_in_export       ({1'b0,roi_left[31:1]}),       //         roi_left_in.export
+        .roi_right_in_export      ({1'b0,roi_right[31:1]}),       //        roi_right_in.export
+		  //.roi_bottom_in_export     (),     //       roi_bottom_in.export
     );
 	
 endmodule

@@ -12,27 +12,11 @@
    element $${FILENAME}
    {
    }
-   element ColAddr
-   {
-      datum _sortIndex
-      {
-         value = "10";
-         type = "int";
-      }
-   }
-   element ColData
-   {
-      datum _sortIndex
-      {
-         value = "12";
-         type = "int";
-      }
-   }
    element HPS_CLK
    {
       datum _sortIndex
       {
-         value = "6";
+         value = "7";
          type = "int";
       }
    }
@@ -40,7 +24,15 @@
    {
       datum _sortIndex
       {
-         value = "8";
+         value = "9";
+         type = "int";
+      }
+   }
+   element HPS_SDRAM_Reset
+   {
+      datum _sortIndex
+      {
+         value = "6";
          type = "int";
       }
    }
@@ -56,7 +48,7 @@
    {
       datum _sortIndex
       {
-         value = "7";
+         value = "8";
          type = "int";
       }
    }
@@ -64,7 +56,7 @@
    {
       datum _sortIndex
       {
-         value = "13";
+         value = "14";
          type = "int";
       }
    }
@@ -72,7 +64,7 @@
    {
       datum _sortIndex
       {
-         value = "14";
+         value = "15";
          type = "int";
       }
    }
@@ -80,7 +72,7 @@
    {
       datum _sortIndex
       {
-         value = "23";
+         value = "24";
          type = "int";
       }
    }
@@ -88,7 +80,7 @@
    {
       datum _sortIndex
       {
-         value = "24";
+         value = "25";
          type = "int";
       }
    }
@@ -96,7 +88,7 @@
    {
       datum _sortIndex
       {
-         value = "25";
+         value = "26";
          type = "int";
       }
    }
@@ -104,7 +96,7 @@
    {
       datum _sortIndex
       {
-         value = "26";
+         value = "27";
          type = "int";
       }
    }
@@ -112,7 +104,7 @@
    {
       datum _sortIndex
       {
-         value = "27";
+         value = "28";
          type = "int";
       }
    }
@@ -120,7 +112,7 @@
    {
       datum _sortIndex
       {
-         value = "28";
+         value = "29";
          type = "int";
       }
    }
@@ -128,7 +120,7 @@
    {
       datum _sortIndex
       {
-         value = "15";
+         value = "16";
          type = "int";
       }
    }
@@ -136,7 +128,7 @@
    {
       datum _sortIndex
       {
-         value = "16";
+         value = "17";
          type = "int";
       }
    }
@@ -144,7 +136,7 @@
    {
       datum _sortIndex
       {
-         value = "17";
+         value = "18";
          type = "int";
       }
    }
@@ -152,7 +144,7 @@
    {
       datum _sortIndex
       {
-         value = "18";
+         value = "19";
          type = "int";
       }
    }
@@ -160,7 +152,7 @@
    {
       datum _sortIndex
       {
-         value = "19";
+         value = "20";
          type = "int";
       }
    }
@@ -168,7 +160,7 @@
    {
       datum _sortIndex
       {
-         value = "20";
+         value = "21";
          type = "int";
       }
    }
@@ -176,7 +168,7 @@
    {
       datum _sortIndex
       {
-         value = "21";
+         value = "22";
          type = "int";
       }
    }
@@ -184,19 +176,11 @@
    {
       datum _sortIndex
       {
-         value = "22";
+         value = "23";
          type = "int";
       }
    }
-   element RowAddr
-   {
-      datum _sortIndex
-      {
-         value = "9";
-         type = "int";
-      }
-   }
-   element RowData
+   element ROI_Bottom
    {
       datum _sortIndex
       {
@@ -204,11 +188,35 @@
          type = "int";
       }
    }
+   element ROI_Left
+   {
+      datum _sortIndex
+      {
+         value = "12";
+         type = "int";
+      }
+   }
+   element ROI_Right
+   {
+      datum _sortIndex
+      {
+         value = "13";
+         type = "int";
+      }
+   }
+   element ROI_Top
+   {
+      datum _sortIndex
+      {
+         value = "10";
+         type = "int";
+      }
+   }
    element jtag_uart_0.avalon_jtag_slave
    {
       datum baseAddress
       {
-         value = "384";
+         value = "400";
          type = "String";
       }
    }
@@ -236,67 +244,19 @@
          type = "int";
       }
    }
-   element ImageData_15.s1
+   element ImageData_11.s1
    {
       datum baseAddress
       {
-         value = "0";
+         value = "112";
          type = "String";
       }
    }
-   element HPS_State.s1
+   element ImageData_0.s1
    {
       datum baseAddress
       {
-         value = "288";
-         type = "String";
-      }
-   }
-   element ImageData_6.s1
-   {
-      datum baseAddress
-      {
-         value = "144";
-         type = "String";
-      }
-   }
-   element ImageData_4.s1
-   {
-      datum baseAddress
-      {
-         value = "176";
-         type = "String";
-      }
-   }
-   element ImageData_1.s1
-   {
-      datum baseAddress
-      {
-         value = "224";
-         type = "String";
-      }
-   }
-   element HPS_Start.s1
-   {
-      datum baseAddress
-      {
-         value = "368";
-         type = "String";
-      }
-   }
-   element ImageData_14.s1
-   {
-      datum baseAddress
-      {
-         value = "16";
-         type = "String";
-      }
-   }
-   element ImageData_12.s1
-   {
-      datum baseAddress
-      {
-         value = "48";
+         value = "352";
          type = "String";
       }
    }
@@ -304,15 +264,87 @@
    {
       datum baseAddress
       {
+         value = "80";
+         type = "String";
+      }
+   }
+   element ImageData_9.s1
+   {
+      datum baseAddress
+      {
+         value = "144";
+         type = "String";
+      }
+   }
+   element HPS_Digits.s1
+   {
+      datum baseAddress
+      {
+         value = "336";
+         type = "String";
+      }
+   }
+   element ROI_Bottom.s1
+   {
+      datum baseAddress
+      {
+         value = "288";
+         type = "String";
+      }
+   }
+   element ImageData_5.s1
+   {
+      datum baseAddress
+      {
+         value = "208";
+         type = "String";
+      }
+   }
+   element ImageData_8.s1
+   {
+      datum baseAddress
+      {
+         value = "160";
+         type = "String";
+      }
+   }
+   element ROI_Top.s1
+   {
+      datum baseAddress
+      {
+         value = "368";
+         type = "String";
+      }
+   }
+   element HPS_SDRAM_Reset.s1
+   {
+      datum baseAddress
+      {
+         value = "0";
+         type = "String";
+      }
+   }
+   element ROI_Left.s1
+   {
+      datum baseAddress
+      {
          value = "32";
          type = "String";
       }
    }
-   element ImageData_10.s1
+   element ImageData_14.s1
    {
       datum baseAddress
       {
-         value = "80";
+         value = "64";
+         type = "String";
+      }
+   }
+   element HPS_State.s1
+   {
+      datum baseAddress
+      {
+         value = "320";
          type = "String";
       }
    }
@@ -320,7 +352,23 @@
    {
       datum baseAddress
       {
-         value = "192";
+         value = "240";
+         type = "String";
+      }
+   }
+   element ImageData_4.s1
+   {
+      datum baseAddress
+      {
+         value = "224";
+         type = "String";
+      }
+   }
+   element ImageData_7.s1
+   {
+      datum baseAddress
+      {
+         value = "176";
          type = "String";
       }
    }
@@ -332,83 +380,19 @@
          type = "String";
       }
    }
-   element ImageData_2.s1
+   element ROI_Right.s1
    {
       datum baseAddress
       {
-         value = "208";
+         value = "16";
          type = "String";
       }
    }
-   element ImageData_9.s1
+   element HPS_Start.s1
    {
       datum baseAddress
       {
-         value = "96";
-         type = "String";
-      }
-   }
-   element ImageData_0.s1
-   {
-      datum baseAddress
-      {
-         value = "336";
-         type = "String";
-      }
-   }
-   element ColAddr.s1
-   {
-      datum baseAddress
-      {
-         value = "272";
-         type = "String";
-      }
-   }
-   element ImageData_11.s1
-   {
-      datum baseAddress
-      {
-         value = "64";
-         type = "String";
-      }
-   }
-   element RowAddr.s1
-   {
-      datum baseAddress
-      {
-         value = "320";
-         type = "String";
-      }
-   }
-   element ImageData_5.s1
-   {
-      datum baseAddress
-      {
-         value = "160";
-         type = "String";
-      }
-   }
-   element ImageData_7.s1
-   {
-      datum baseAddress
-      {
-         value = "128";
-         type = "String";
-      }
-   }
-   element RowData.s1
-   {
-      datum baseAddress
-      {
-         value = "352";
-         type = "String";
-      }
-   }
-   element ColData.s1
-   {
-      datum baseAddress
-      {
-         value = "240";
+         value = "384";
          type = "String";
       }
    }
@@ -416,23 +400,55 @@
    {
       datum baseAddress
       {
-         value = "256";
-         type = "String";
-      }
-   }
-   element HPS_Digits.s1
-   {
-      datum baseAddress
-      {
          value = "304";
          type = "String";
       }
    }
-   element ImageData_8.s1
+   element ImageData_2.s1
    {
       datum baseAddress
       {
-         value = "112";
+         value = "256";
+         type = "String";
+      }
+   }
+   element ImageData_10.s1
+   {
+      datum baseAddress
+      {
+         value = "128";
+         type = "String";
+      }
+   }
+   element ImageData_6.s1
+   {
+      datum baseAddress
+      {
+         value = "192";
+         type = "String";
+      }
+   }
+   element ImageData_15.s1
+   {
+      datum baseAddress
+      {
+         value = "48";
+         type = "String";
+      }
+   }
+   element ImageData_12.s1
+   {
+      datum baseAddress
+      {
+         value = "96";
+         type = "String";
+      }
+   }
+   element ImageData_1.s1
+   {
+      datum baseAddress
+      {
+         value = "272";
          type = "String";
       }
    }
@@ -522,23 +538,13 @@
    type="conduit"
    dir="end" />
  <interface
-   name="row_data_in"
-   internal="RowData.external_connection"
+   name="roi_top_in"
+   internal="ROI_Top.external_connection"
    type="conduit"
    dir="end" />
  <interface
    name="hps_state_out"
    internal="HPS_State.external_connection"
-   type="conduit"
-   dir="end" />
- <interface
-   name="row_addr_out"
-   internal="RowAddr.external_connection"
-   type="conduit"
-   dir="end" />
- <interface
-   name="col_addr_out"
-   internal="ColAddr.external_connection"
    type="conduit"
    dir="end" />
  <interface
@@ -552,8 +558,8 @@
    type="conduit"
    dir="end" />
  <interface
-   name="col_data_in"
-   internal="ColData.external_connection"
+   name="roi_bottom_in"
+   internal="ROI_Bottom.external_connection"
    type="conduit"
    dir="end" />
  <interface
@@ -629,6 +635,21 @@
  <interface
    name="imgdata_in15"
    internal="ImageData_15.external_connection"
+   type="conduit"
+   dir="end" />
+ <interface
+   name="roi_left_in"
+   internal="ROI_Left.external_connection"
+   type="conduit"
+   dir="end" />
+ <interface
+   name="roi_right_in"
+   internal="ROI_Right.external_connection"
+   type="conduit"
+   dir="end" />
+ <interface
+   name="hps_sdram_reset"
+   internal="HPS_SDRAM_Reset.external_connection"
    type="conduit"
    dir="end" />
  <module kind="altera_pll" version="13.1" enabled="1" name="system_pll_0">
@@ -1387,7 +1408,7 @@
   <parameter name="width" value="32" />
   <parameter name="clockRate" value="50000000" />
  </module>
- <module kind="altera_avalon_pio" version="13.1" enabled="1" name="RowData">
+ <module kind="altera_avalon_pio" version="13.1" enabled="1" name="ROI_Top">
   <parameter name="bitClearingEdgeCapReg" value="true" />
   <parameter name="bitModifyingOutReg" value="false" />
   <parameter name="captureEdge" value="true" />
@@ -1429,34 +1450,6 @@
   <parameter name="width" value="32" />
   <parameter name="clockRate" value="50000000" />
  </module>
- <module kind="altera_avalon_pio" version="13.1" enabled="1" name="RowAddr">
-  <parameter name="bitClearingEdgeCapReg" value="false" />
-  <parameter name="bitModifyingOutReg" value="false" />
-  <parameter name="captureEdge" value="false" />
-  <parameter name="direction" value="Output" />
-  <parameter name="edgeType" value="RISING" />
-  <parameter name="generateIRQ" value="false" />
-  <parameter name="irqType" value="LEVEL" />
-  <parameter name="resetValue" value="0" />
-  <parameter name="simDoTestBenchWiring" value="false" />
-  <parameter name="simDrivenValue" value="0" />
-  <parameter name="width" value="32" />
-  <parameter name="clockRate" value="50000000" />
- </module>
- <module kind="altera_avalon_pio" version="13.1" enabled="1" name="ColAddr">
-  <parameter name="bitClearingEdgeCapReg" value="true" />
-  <parameter name="bitModifyingOutReg" value="false" />
-  <parameter name="captureEdge" value="true" />
-  <parameter name="direction" value="Output" />
-  <parameter name="edgeType" value="FALLING" />
-  <parameter name="generateIRQ" value="true" />
-  <parameter name="irqType" value="EDGE" />
-  <parameter name="resetValue" value="0" />
-  <parameter name="simDoTestBenchWiring" value="true" />
-  <parameter name="simDrivenValue" value="0" />
-  <parameter name="width" value="32" />
-  <parameter name="clockRate" value="50000000" />
- </module>
  <module kind="altera_avalon_pio" version="13.1" enabled="1" name="HPS_CLK">
   <parameter name="bitClearingEdgeCapReg" value="false" />
   <parameter name="bitModifyingOutReg" value="false" />
@@ -1471,7 +1464,7 @@
   <parameter name="width" value="1" />
   <parameter name="clockRate" value="50000000" />
  </module>
- <module kind="altera_avalon_pio" version="13.1" enabled="1" name="ColData">
+ <module kind="altera_avalon_pio" version="13.1" enabled="1" name="ROI_Bottom">
   <parameter name="bitClearingEdgeCapReg" value="true" />
   <parameter name="bitModifyingOutReg" value="false" />
   <parameter name="captureEdge" value="true" />
@@ -1755,13 +1748,59 @@
   <parameter name="width" value="32" />
   <parameter name="clockRate" value="50000000" />
  </module>
+ <module kind="altera_avalon_pio" version="13.1" enabled="1" name="ROI_Left">
+  <parameter name="bitClearingEdgeCapReg" value="true" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="true" />
+  <parameter name="direction" value="Input" />
+  <parameter name="edgeType" value="FALLING" />
+  <parameter name="generateIRQ" value="true" />
+  <parameter name="irqType" value="EDGE" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="true" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="32" />
+  <parameter name="clockRate" value="50000000" />
+ </module>
+ <module kind="altera_avalon_pio" version="13.1" enabled="1" name="ROI_Right">
+  <parameter name="bitClearingEdgeCapReg" value="true" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="true" />
+  <parameter name="direction" value="Input" />
+  <parameter name="edgeType" value="FALLING" />
+  <parameter name="generateIRQ" value="true" />
+  <parameter name="irqType" value="EDGE" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="true" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="32" />
+  <parameter name="clockRate" value="50000000" />
+ </module>
+ <module
+   kind="altera_avalon_pio"
+   version="13.1"
+   enabled="1"
+   name="HPS_SDRAM_Reset">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="1" />
+  <parameter name="clockRate" value="50000000" />
+ </module>
  <connection
    kind="avalon"
    version="13.1"
    start="hps_0.h2f_lw_axi_master"
    end="HPS_Start.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0170" />
+  <parameter name="baseAddress" value="0x0180" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -1770,7 +1809,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="jtag_uart_0.avalon_jtag_slave">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0180" />
+  <parameter name="baseAddress" value="0x0190" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -1858,7 +1897,7 @@
    kind="clock"
    version="13.1"
    start="sys_sdram_pll_0.sys_clk"
-   end="RowData.clk" />
+   end="ROI_Top.clk" />
  <connection
    kind="reset"
    version="13.1"
@@ -1873,19 +1912,19 @@
    kind="reset"
    version="13.1"
    start="sys_sdram_pll_0.reset_source"
-   end="RowData.reset" />
+   end="ROI_Top.reset" />
  <connection
    kind="reset"
    version="13.1"
    start="hps_0.h2f_reset"
-   end="RowData.reset" />
+   end="ROI_Top.reset" />
  <connection
    kind="avalon"
    version="13.1"
    start="hps_0.h2f_lw_axi_master"
-   end="RowData.s1">
+   end="ROI_Top.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0160" />
+  <parameter name="baseAddress" value="0x0170" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -1894,7 +1933,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="ImageData_0.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0150" />
+  <parameter name="baseAddress" value="0x0160" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -1908,11 +1947,6 @@
    start="sys_sdram_pll_0.sys_clk"
    end="HPS_Digits.clk" />
  <connection
-   kind="clock"
-   version="13.1"
-   start="sys_sdram_pll_0.sys_clk"
-   end="RowAddr.clk" />
- <connection
    kind="reset"
    version="13.1"
    start="sys_sdram_pll_0.reset_source"
@@ -1923,26 +1957,12 @@
    start="sys_sdram_pll_0.reset_source"
    end="HPS_Digits.reset" />
  <connection
-   kind="reset"
-   version="13.1"
-   start="sys_sdram_pll_0.reset_source"
-   end="RowAddr.reset" />
- <connection
-   kind="avalon"
-   version="13.1"
-   start="hps_0.h2f_lw_axi_master"
-   end="RowAddr.s1">
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0140" />
-  <parameter name="defaultConnection" value="false" />
- </connection>
- <connection
    kind="avalon"
    version="13.1"
    start="hps_0.h2f_lw_axi_master"
    end="HPS_Digits.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0130" />
+  <parameter name="baseAddress" value="0x0150" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -1951,28 +1971,9 @@
    start="hps_0.h2f_lw_axi_master"
    end="HPS_State.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0120" />
+  <parameter name="baseAddress" value="0x0140" />
   <parameter name="defaultConnection" value="false" />
  </connection>
- <connection
-   kind="clock"
-   version="13.1"
-   start="sys_sdram_pll_0.sys_clk"
-   end="ColAddr.clk" />
- <connection
-   kind="avalon"
-   version="13.1"
-   start="hps_0.h2f_lw_axi_master"
-   end="ColAddr.s1">
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0110" />
-  <parameter name="defaultConnection" value="false" />
- </connection>
- <connection
-   kind="reset"
-   version="13.1"
-   start="sys_sdram_pll_0.reset_source"
-   end="ColAddr.reset" />
  <connection
    kind="interrupt"
    version="13.1"
@@ -1984,7 +1985,7 @@
    kind="interrupt"
    version="13.1"
    start="hps_0.f2h_irq0"
-   end="RowData.irq">
+   end="ROI_Top.irq">
   <parameter name="irqNumber" value="2" />
  </connection>
  <connection
@@ -2003,40 +2004,40 @@
    start="hps_0.h2f_lw_axi_master"
    end="HPS_CLK.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0100" />
+  <parameter name="baseAddress" value="0x0130" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
    kind="reset"
    version="13.1"
    start="hps_0.h2f_reset"
-   end="ColData.reset" />
+   end="ROI_Bottom.reset" />
  <connection
    kind="avalon"
    version="13.1"
    start="hps_0.h2f_lw_axi_master"
-   end="ColData.s1">
+   end="ROI_Bottom.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00f0" />
+  <parameter name="baseAddress" value="0x0120" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
    kind="interrupt"
    version="13.1"
    start="hps_0.f2h_irq0"
-   end="ColData.irq">
+   end="ROI_Bottom.irq">
   <parameter name="irqNumber" value="3" />
  </connection>
  <connection
    kind="clock"
    version="13.1"
    start="sys_sdram_pll_0.sys_clk"
-   end="ColData.clk" />
+   end="ROI_Bottom.clk" />
  <connection
    kind="reset"
    version="13.1"
    start="sys_sdram_pll_0.reset_source"
-   end="ColData.reset" />
+   end="ROI_Bottom.reset" />
  <connection
    kind="reset"
    version="13.1"
@@ -2048,7 +2049,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="ImageData_1.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00e0" />
+  <parameter name="baseAddress" value="0x0110" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -2079,7 +2080,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="ImageData_2.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00d0" />
+  <parameter name="baseAddress" value="0x0100" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -2110,7 +2111,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="ImageData_3.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00c0" />
+  <parameter name="baseAddress" value="0x00f0" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -2141,7 +2142,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="ImageData_4.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00b0" />
+  <parameter name="baseAddress" value="0x00e0" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -2172,7 +2173,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="ImageData_5.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00a0" />
+  <parameter name="baseAddress" value="0x00d0" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -2203,7 +2204,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="ImageData_6.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0090" />
+  <parameter name="baseAddress" value="0x00c0" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -2234,7 +2235,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="ImageData_7.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0080" />
+  <parameter name="baseAddress" value="0x00b0" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -2265,7 +2266,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="ImageData_8.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0070" />
+  <parameter name="baseAddress" value="0x00a0" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -2296,7 +2297,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="ImageData_9.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0060" />
+  <parameter name="baseAddress" value="0x0090" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -2327,7 +2328,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="ImageData_10.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0050" />
+  <parameter name="baseAddress" value="0x0080" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -2358,7 +2359,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="ImageData_11.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0040" />
+  <parameter name="baseAddress" value="0x0070" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -2389,7 +2390,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="ImageData_12.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0030" />
+  <parameter name="baseAddress" value="0x0060" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -2420,7 +2421,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="ImageData_13.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0020" />
+  <parameter name="baseAddress" value="0x0050" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -2451,7 +2452,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="ImageData_14.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0010" />
+  <parameter name="baseAddress" value="0x0040" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -2482,7 +2483,7 @@
    start="hps_0.h2f_lw_axi_master"
    end="ImageData_15.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0000" />
+  <parameter name="baseAddress" value="0x0030" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -2502,6 +2503,92 @@
    version="13.1"
    start="sys_sdram_pll_0.reset_source"
    end="ImageData_15.reset" />
+ <connection
+   kind="reset"
+   version="13.1"
+   start="hps_0.h2f_reset"
+   end="ROI_Left.reset" />
+ <connection
+   kind="avalon"
+   version="13.1"
+   start="hps_0.h2f_lw_axi_master"
+   end="ROI_Left.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x0020" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="interrupt"
+   version="13.1"
+   start="hps_0.f2h_irq0"
+   end="ROI_Left.irq">
+  <parameter name="irqNumber" value="19" />
+ </connection>
+ <connection
+   kind="clock"
+   version="13.1"
+   start="sys_sdram_pll_0.sys_clk"
+   end="ROI_Left.clk" />
+ <connection
+   kind="reset"
+   version="13.1"
+   start="sys_sdram_pll_0.reset_source"
+   end="ROI_Left.reset" />
+ <connection
+   kind="reset"
+   version="13.1"
+   start="hps_0.h2f_reset"
+   end="ROI_Right.reset" />
+ <connection
+   kind="avalon"
+   version="13.1"
+   start="hps_0.h2f_lw_axi_master"
+   end="ROI_Right.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x0010" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="interrupt"
+   version="13.1"
+   start="hps_0.f2h_irq0"
+   end="ROI_Right.irq">
+  <parameter name="irqNumber" value="20" />
+ </connection>
+ <connection
+   kind="clock"
+   version="13.1"
+   start="sys_sdram_pll_0.sys_clk"
+   end="ROI_Right.clk" />
+ <connection
+   kind="reset"
+   version="13.1"
+   start="sys_sdram_pll_0.reset_source"
+   end="ROI_Right.reset" />
+ <connection
+   kind="reset"
+   version="13.1"
+   start="hps_0.h2f_reset"
+   end="HPS_SDRAM_Reset.reset" />
+ <connection
+   kind="avalon"
+   version="13.1"
+   start="hps_0.h2f_lw_axi_master"
+   end="HPS_SDRAM_Reset.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x0000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="clock"
+   version="13.1"
+   start="sys_sdram_pll_0.sys_clk"
+   end="HPS_SDRAM_Reset.clk" />
+ <connection
+   kind="reset"
+   version="13.1"
+   start="sys_sdram_pll_0.reset_source"
+   end="HPS_SDRAM_Reset.reset" />
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
  <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />
  <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="false" />

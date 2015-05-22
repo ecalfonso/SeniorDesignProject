@@ -765,10 +765,6 @@
 													<placeholders>
 														<placeholder>dock.single.Library</placeholder>
 													</placeholders>
-													<placeholder-map>
-														<version>0</version>
-														<format>dock.PlaceholderList</format>
-													</placeholder-map>
 												</leaf>
 												<leaf id="-1" nodeId="1375985011087">
 													<placeholders>
@@ -809,10 +805,6 @@
 															<placeholders>
 																<placeholder>dock.single.Messages</placeholder>
 															</placeholders>
-															<placeholder-map>
-																<version>0</version>
-																<format>dock.PlaceholderList</format>
-															</placeholder-map>
 														</leaf>
 													</node>
 													<leaf id="-1" nodeId="1372710005737">
