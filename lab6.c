@@ -19,22 +19,22 @@ volatile int * iRowData			= (int *) 0xFF200160;
 volatile int * iColData			= (int *) 0xFF2000F0;
 
 volatile int * iImgData0			= (int *) 0xFF200150;
-//volatile int * iImgData1			= (int *) 0xFF2000E0;
+volatile int * iImgData1			= (int *) 0xFF2000E0;
 volatile int * iImgData2			= (int *) 0xFF2000D0;
-//volatile int * iImgData3			= (int *) 0xFF2000C0;
+volatile int * iImgData3			= (int *) 0xFF2000C0;
 volatile int * iImgData4			= (int *) 0xFF2000B0;
-//volatile int * iImgData5			= (int *) 0xFF2000A0;
+volatile int * iImgData5			= (int *) 0xFF2000A0;
 volatile int * iImgData6			= (int *) 0xFF200090;
-//volatile int * iImgData7			= (int *) 0xFF200080;
+volatile int * iImgData7			= (int *) 0xFF200080;
 
 volatile int * iImgData8			= (int *) 0xFF200070;
-//volatile int * iImgData9			= (int *) 0xFF200060;
+volatile int * iImgData9			= (int *) 0xFF200060;
 volatile int * iImgData10			= (int *) 0xFF200050;
-//volatile int * iImgData11			= (int *) 0xFF200040;
+volatile int * iImgData11			= (int *) 0xFF200040;
 volatile int * iImgData12			= (int *) 0xFF200030;
-//volatile int * iImgData13			= (int *) 0xFF200020;
+volatile int * iImgData13			= (int *) 0xFF200020;
 volatile int * iImgData14			= (int *) 0xFF200010;
-//volatile int * iImgData15			= (int *) 0xFF200000;
+volatile int * iImgData15			= (int *) 0xFF200000;
 
 void Clock(void)
 {
@@ -138,7 +138,6 @@ int main(void){
 	int digitHeight = 0;
 	int segmentIntensity = 0;			// Accumulator to check if the segment isn't all white pixels
 	int digitArr[784] = { 0 };
-	//int digitArr[400] = { 0 };
 	
 	// Neural network variables
 	float sum;
@@ -172,8 +171,6 @@ int main(void){
 		// Reset the variables for next iteration
 		//
 		// -----------------------------------------------------------------------------------
-		//for (i = 0; i < 640; i++) colsSumArr[i] = 0;
-		//for (i = 0; i < 480; i++) rowsSumArr[i] = 0;
 		
 		memset(colsSumArr, 0, sizeof(colsSumArr));
 		memset(rowsSumArr, 0, sizeof(rowsSumArr));
@@ -220,28 +217,25 @@ int main(void){
 			
 		for (rows = 0; rows < 480; rows++)	// 640x480
 		{	
-			for(cols = 0; cols < 640; cols += 8)
+			for(cols = 0; cols < 640; cols += 16)
 			{
 				Clock();
 				imgArr[rows][cols] = *iImgData0;
-				imgArr[rows][cols+1] = *iImgData2;
-				imgArr[rows][cols+2] = *iImgData4;
-				imgArr[rows][cols+3] = *iImgData6;
-				imgArr[rows][cols+4] = *iImgData8;
-				imgArr[rows][cols+5] = *iImgData10;
-				imgArr[rows][cols+6] = *iImgData12;
-				imgArr[rows][cols+7] = *iImgData14;
-				
-				/*				
-				imgArr[rows][cols] = *iImgData1;
-				imgArr[rows][cols+1] = *iImgData3;
-				imgArr[rows][cols+2] = *iImgData5;
-				imgArr[rows][cols+3] = *iImgData7;
-				imgArr[rows][cols+4] = *iImgData9;
-				imgArr[rows][cols+5] = *iImgData11;
-				imgArr[rows][cols+6] = *iImgData13;
-				imgArr[rows][cols+7] = *iImgData15;
-				*/
+				imgArr[rows][cols+1] = *iImgData1;
+				imgArr[rows][cols+2] = *iImgData2;
+				imgArr[rows][cols+3] = *iImgData3;
+				imgArr[rows][cols+4] = *iImgData4;
+				imgArr[rows][cols+5] = *iImgData5;
+				imgArr[rows][cols+6] = *iImgData6;
+				imgArr[rows][cols+7] = *iImgData7;
+				imgArr[rows][cols+8] = *iImgData8;
+				imgArr[rows][cols+9] = *iImgData9;
+				imgArr[rows][cols+10] = *iImgData10;
+				imgArr[rows][cols+11] = *iImgData11;
+				imgArr[rows][cols+12] = *iImgData12;
+				imgArr[rows][cols+13] = *iImgData13;
+				imgArr[rows][cols+14] = *iImgData14;
+				imgArr[rows][cols+15] = *iImgData15;
 			}
 		}
 		

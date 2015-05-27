@@ -251,26 +251,33 @@ parameter SHIFT_WIDTH = 16;
 reg 	[SHIFT_WIDTH-1:0] shift;
 reg 	[SHIFT_WIDTH-1:0]	shift_DVAL;	
 reg	[4:0]					shift_clk;
+reg							switch;
 
 initial begin
+	switch		<= 0;
 	shift 		<= 0;
 	shift_DVAL 	<= 0;
-	shift_clk 	<= SHIFT_WIDTH/2;
+	shift_clk 	<= SHIFT_WIDTH;
 end
 
 always@(posedge CCD_PIXCLK or negedge DLY_RST_1) begin
 	if (!DLY_RST_1) begin
+		switch 		<= 0;
 		shift 		<= 0;
 		shift_DVAL 	<= 0;
 	end
 	else begin
-		shift 		<= {sCCD_B[0], shift[SHIFT_WIDTH-1:1]};
-		shift_DVAL 	<= {sCCD_DVAL, shift_DVAL[SHIFT_WIDTH-1:1]};
+		switch		<= ~switch;
+	
+		if (switch == 1'b1) begin
+			shift 		<= {sCCD_B[0], shift[SHIFT_WIDTH-1:1]};
+			shift_DVAL 	<= {sCCD_DVAL, shift_DVAL[SHIFT_WIDTH-1:1]};
+		end
 	end
 end
 
 always@(negedge CCD_PIXCLK or negedge DLY_RST_1) begin
-	if (!DLY_RST_1)	shift_clk <= SHIFT_WIDTH/2;
+	if (!DLY_RST_1)	shift_clk <= SHIFT_WIDTH;
 	else					shift_clk <= shift_clk + 1;
 end
 
@@ -287,12 +294,12 @@ Sdram_Control_4Port	u7	(
 							.WR1(shift_DVAL[0]),
 							.WR1_ADDR(0),					// Memory start for one section of the memory
 							//.WR1_MAX_ADDR(640*480),
-							.WR1_MAX_ADDR(640*480/(SHIFT_WIDTH/2)),
+							.WR1_MAX_ADDR(640*480/(SHIFT_WIDTH)),
 							.WR1_LENGTH(256),
 							//.WR1_LENGTH(1),
 							.WR1_LOAD(!DLY_RST_0),
 							//.WR1_CLK(~CCD_PIXCLK),		// This clock is directly from the CCD Camera Module, the Camera controls the write to memory
-							.WR1_CLK(shift_clk[3]),
+							.WR1_CLK(shift_clk[4]),
 							// CCD data is written on the falling edge of the CCD_PIXCLK
 
 							//	FIFO Write Side 2
@@ -313,7 +320,7 @@ Sdram_Control_4Port	u7	(
 							.RD1(1),			// Always ready since we control the clock
 				        	.RD1_ADDR(0),
 							//.RD1_MAX_ADDR(640*480),
-							.RD1_MAX_ADDR(640*480/(SHIFT_WIDTH/2)),
+							.RD1_MAX_ADDR(640*480/(SHIFT_WIDTH)),
 							.RD1_LENGTH(256),
 							//.RD1_LENGTH(1),
 							.RD1_LOAD(!DLY_RST_0),
@@ -395,25 +402,25 @@ wire [9:0] HPS_State;
 		  .startsignal_export       (HPS_Capture_Start),       //         startsignal.export
         .hps_clk_out_export       (HPS_CLK),       //         hps_clk_out.export
 		  
-        .row_data_in_export       (rowDataIn),       //         row_data_in.export
+        //.row_data_in_export       (rowDataIn),       //         row_data_in.export
         //.col_data_in_export       (colDataIn),
 		  
 		  .imgdata_in0_export       (Read_DATA1[0]),       //         imgdata_in0.export
-		  //.imgdata_in1_export       (Read_DATA1[1]),       //         imgdata_in1.export
+		  .imgdata_in1_export       (Read_DATA1[1]),       //         imgdata_in1.export
         .imgdata_in2_export       (Read_DATA1[2]),       //         imgdata_in2.export
-        //.imgdata_in3_export       (Read_DATA1[3]),       //         imgdata_in3.export
+        .imgdata_in3_export       (Read_DATA1[3]),       //         imgdata_in3.export
         .imgdata_in4_export       (Read_DATA1[4]),       //         imgdata_in4.export
-        //.imgdata_in5_export       (Read_DATA1[5]),       //         imgdata_in5.export
+        .imgdata_in5_export       (Read_DATA1[5]),       //         imgdata_in5.export
         .imgdata_in6_export       (Read_DATA1[6]),       //         imgdata_in6.export
-        //.imgdata_in7_export       (Read_DATA1[7]),       //         imgdata_in7.export
+        .imgdata_in7_export       (Read_DATA1[7]),       //         imgdata_in7.export
         .imgdata_in8_export       (Read_DATA1[8]),       //         imgdata_in8.export
-        //.imgdata_in9_export       (Read_DATA1[9]),       //         imgdata_in9.export
+        .imgdata_in9_export       (Read_DATA1[9]),       //         imgdata_in9.export
         .imgdata_in10_export      (Read_DATA1[10]),      //        imgdata_in10.export
-        //.imgdata_in11_export      (Read_DATA1[11]),      //        imgdata_in11.export
+        .imgdata_in11_export      (Read_DATA1[11]),      //        imgdata_in11.export
         .imgdata_in12_export      (Read_DATA1[12]),      //        imgdata_in12.export
-        //.imgdata_in13_export      (Read_DATA1[13]),      //        imgdata_in13.export
+        .imgdata_in13_export      (Read_DATA1[13]),      //        imgdata_in13.export
         .imgdata_in14_export      (Read_DATA1[14]),      //        imgdata_in14.export
-        //.imgdata_in15_export      (Read_DATA1[15]),      //        imgdata_in15.export
+        .imgdata_in15_export      (Read_DATA1[15]),      //        imgdata_in15.export
 
         .row_addr_out_export      (HPS_Row_Addr),      //        row_addr_out.export
         .col_addr_out_export      (HPS_Col_Addr),      //        col_addr_out.export
