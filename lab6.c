@@ -13,7 +13,7 @@ volatile int * oState			= (int *) 0xFF200140;		// Used to show the state with LE
 volatile int * oDigits			= (int *) 0xFF200150;		// Displays proposed digits to HEX modules
 
 volatile int * roi_top		= (int *) 0xFF200170;
-volatile int * roi_bottom	= (int *) 0xFF200120;
+volatile int * roi_bot		= (int *) 0xFF200120;
 volatile int * roi_left		= (int *) 0xFF200020;
 volatile int * roi_right	= (int *) 0xFF200010;
 
@@ -460,9 +460,10 @@ int main(void){
 		printf("roiLeft: %d, roiRight: %d\n", roiLeft, roiRight);
 		printf("roiTop: %d, roiBottom: %d\n", roiTop, roiBottom);
 		
-		printf("HW roi_top: %d", *roi_top);		
-		printf("HW roi_left: %d", *roi_left - 20);		
-		printf("HW roi_right: %d", *roi_right - 20);
+		printf("HW roi_top: %d\n", *roi_top);	
+		printf("HW roi_bot: %d\n", *roi_bot);			
+		printf("HW roi_left: %d\n", *roi_left - 20);		
+		printf("HW roi_right: %d\n", *roi_right - 20);
 		
 		/*
 		for (rows = roiTop; rows < roiBottom; rows++)
