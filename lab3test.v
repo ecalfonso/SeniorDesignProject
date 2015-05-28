@@ -114,7 +114,6 @@ wire [9:0] HPS_R;
 wire [9:0] HPS_G;
 wire [9:0] HPS_B;
 wire HPS_Capture_Start;
-wire HPS_CLK;
 //=======================================================
 //  Structural coding
 //=======================================================
@@ -163,7 +162,7 @@ VGA_Controller		u1	(	//	Host Side
 							
 							.iRed(VGADataIn),
 							.iGreen(VGADataIn),
-							.iBlue(VGADataIn ),
+							.iBlue(VGADataIn),
 							
 							//	VGA Side
 							.oVGA_R(oVGA_R),
@@ -223,23 +222,34 @@ reg [31:0] 	roi_top;
 reg [31:0]	roi_bot;
 reg [31:0]	roi_left;
 reg [31:0]	roi_right;
-reg 			roi_region;
+reg 			roi_regionL;
+reg			roi_regionR;
 reg [4:0] 	roi_state;
 reg [127:0] line_buff;
 
 initial begin
-	roi_state 	<= 0;
-	roi_top 		<= 0;
-	roi_region	<= 0;
-	line_buff	<= 128'h00000000000000000000000000000000; // Zero out the buffer
+	roi_top			<= 0;
+	roi_bot			<= 0;
+	roi_left			<= 0;
+	roi_right		<= 0;
+	roi_state 		<= 0;
+	roi_top 			<= 0;
+	roi_regionL 	<= 0;
+	roi_regionR 	<= 0;
+	line_buff		<= 128'h00000000000000000000000000000000; // Zero out the buffer
 end
 	
 always@(posedge CCD_PIXCLK or negedge DLY_RST_1) begin
 	if (!DLY_RST_1) begin
-		roi_state <= 0;
-		roi_top 		<= 0;
-		roi_region 	<= 0;
-		line_buff	<= 128'h00000000000000000000000000000000; // Zero out the buffer
+		roi_top			<= 0;
+	   roi_bot			<= 0;
+	   roi_left			<= 0;
+	   roi_right		<= 0;
+		roi_state 		<= 0;
+		roi_top 			<= 0;
+		roi_regionL 	<= 0;
+		roi_regionR 	<= 0;
+		line_buff		<= 128'h00000000000000000000000000000000; // Zero out the buffer
 	end
 	else begin
 		case (roi_state)
@@ -265,16 +275,18 @@ always@(posedge CCD_PIXCLK or negedge DLY_RST_1) begin
 				
 					// Look for WHITE/BLACK edge between a Y buffer of 50 and 910. It's most likely not there
 					// Only care about the first half of the screen 0->640
-					if (Y_Cont > 50 && Y_Cont < 910 && X_Cont < 640 && line_buff == 128'hFFFFFFFFFFFFFFFF0000000000000000) begin // Try to find the ROI
-						roi_state <= 2;
+
+					if (Y_Cont > 50 && Y_Cont < 910 && X_Cont < 640 && line_buff == 128'hFFFFFFFFFFFFFFFFFFFFFFFFFF000000) begin // Try to find the ROI
+						
 						roi_top <= Y_Cont;
+						roi_state <= 2;
 					end
 				end
 				
 				// We hit the end of the image, and didn't change state, so reset
 				if (Y_Cont == 960) roi_state <= 0;
 			end // End 1
-			2: begin // We're at the point of the top of the ROI, let's grab the LEFT index a couple fo lines down from the TOP
+			2: begin // We're at the point of the top of the ROI, let's grab the LEFT index a couple of lines down from the TOP
 				if (X_Cont == 0) begin
 					line_buff <= 128'h00000000000000000000000000000000;	// Reset line buffer
 				end
@@ -284,7 +296,7 @@ always@(posedge CCD_PIXCLK or negedge DLY_RST_1) begin
 					// Look for WHITE/BLACK edge between a Y buffer of 50 and 910
 					// Only care about the first half of the screen 0->640
 					// Look many lines after TOP to take into account if the ROI is tilted
-					if (Y_Cont > roi_top + 50 && Y_Cont < 910 && X_Cont < 640 && line_buff == 128'hFFFFFFFFFFFFFFFF0000000000000000) begin // Try to find the ROI
+					if (Y_Cont > roi_top + 24 && Y_Cont < 910 && X_Cont < 640 && line_buff == 128'hFFFFFFFFFFFFFFFFFFFFFFFFFF000000) begin // Try to find the ROI
 						roi_state <= 3;
 						roi_left <= X_Cont;
 					end
@@ -303,10 +315,14 @@ always@(posedge CCD_PIXCLK or negedge DLY_RST_1) begin
 					// Look for BLACK/WHITE edge between a Y buffer of 50 and 910
 					// Only care about the first half of the screen 640->1280
 					// Look many lines after TOP to take into account if the ROI is tilted
-					if (Y_Cont > roi_top + 50 && Y_Cont < 910 && X_Cont > 640 && line_buff == 128'h0000000000000000FFFFFFFFFFFFFFFF) begin // Try to find the ROI
-						roi_state <= 4;
+					if (Y_Cont > roi_top + 24 && Y_Cont < 910 && X_Cont > 640 && line_buff == 128'h0000000FFFFFFFFFFFFFFFFFFFFFFFFF) begin // Try to find the ROI
 						roi_right <= X_Cont;
 					end
+					
+					if (X_Cont == 1279) begin
+						roi_state <= 4;
+					end
+
 				end
 				
 				// We hit the end of the image, and didn't change state, so reset
@@ -317,21 +333,27 @@ always@(posedge CCD_PIXCLK or negedge DLY_RST_1) begin
 					line_buff <= 128'h00000000000000000000000000000000;	// Reset line buffer
 					// roi_region is the switch saying we're still in the ROI
 					// It will <= 1 if we find a WHITE/BLACK edge in the current ROW
-					roi_region 	<= 0;		
+					roi_regionL 	<= 0;		
+					roi_regionR    <= 0;
 				end
-				else begin
+				else begin	
 					line_buff <= {line_buff[126:0], sCCD_B[0]};	// Shift the pixels into a buffer
 				
-					// Keep cycling and look for WHITE/BLACK == We're still in the ROI
-					// Exit this state if we find that we don't see an edge anymore
-					if (Y_Cont > roi_top && Y_Cont < 910 && X_Cont < 640 && line_buff == 128'hFFFFFFFFFFFFFFFF0000000000000000) begin // Try to find the ROI
-						roi_region <= 1; // We're still in the ROI region
+					// Keep cycling and look for LEFT and RIGHT edge
+					// Exit this state if we find that we don't see edges anymore
+					if (Y_Cont > roi_top && Y_Cont < 910 && X_Cont < 640 && line_buff == 128'hFFFFFFFFFFFFFFFFFFFFFFFFF0000000) begin
+						roi_regionL <= 1;
+						
+					end
+					if (Y_Cont > roi_top && Y_Cont < 910 && X_Cont > 640 && line_buff == 128'h0000000FFFFFFFFFFFFFFFFFFFFFFFFF) begin
+						roi_regionR <= 1; // We're still in the ROI region
 					end
 				end
 				
-				// At the end of the ROW, check if we found a WHITE/BLACK edge
-				if (X_Cont == 1280) begin
-					if (roi_region == 0) begin
+				// At the end of the ROW, check if we found a LEFT/RIGHT edges
+				// If not, set BOTTOM and go to wait state
+				if (X_Cont == 1279) begin
+					if (roi_regionL == 0 && roi_regionR == 0) begin
 						roi_state <= 5;
 						roi_bot <= Y_Cont;
 					end
@@ -370,7 +392,7 @@ wire [3:0] dig1;
 						
 bin2dec 					(
 							//.iData (HPS_Digits),
-							.iData(roi_right),
+							.iData({1'b0,roi_right[31:1]}),
 							.HunThousand(dig6),
 							.TenThousand(dig5),
 							.Thousands(dig4),
@@ -388,7 +410,7 @@ wire [3:0] dig01;
 						
 bin2dec 					(
 							//.iData (HPS_Digits),
-							.iData(roi_left),
+							.iData({1'b0,roi_left[31:1]}),
 							.HunThousand(dig06),
 							.TenThousand(dig05),
 							.Thousands(dig04),
@@ -443,6 +465,7 @@ Sdram_Control_4Port	u7	(
 							.WR1_MAX_ADDR(640*480/(SHIFT_WIDTH/2)),
 							.WR1_LENGTH(256),
 							//.WR1_LENGTH(1),
+							//.WR1_LOAD(!DLY_RST_0),
 							.WR1_LOAD(!DLY_RST_0),
 							//.WR1_CLK(~CCD_PIXCLK),		// This clock is directly from the CCD Camera Module, the Camera controls the write to memory
 							.WR1_CLK(shift_clk[3]),
@@ -456,6 +479,7 @@ Sdram_Control_4Port	u7	(
 							.WR2_MAX_ADDR(22'h100000+640*480),
 							.WR2_LENGTH(256),
 							//.WR2_LENGTH(1),
+							//.WR2_LOAD(!DLY_RST_0),
 							.WR2_LOAD(!DLY_RST_0),
 							.WR2_CLK(~CCD_PIXCLK),
 
@@ -465,14 +489,16 @@ Sdram_Control_4Port	u7	(
 				        	//.RD1(Read),
 							.RD1(1),			// Always ready since we control the clock
 				        	.RD1_ADDR(0),
+							//.RD1_ADDR(roi_top<<6 + roi_top << 4),
 							//.RD1_MAX_ADDR(640*480),
 							.RD1_MAX_ADDR(640*480/(SHIFT_WIDTH/2)),
 							.RD1_LENGTH(256),
 							//.RD1_LENGTH(1),
-							.RD1_LOAD(!DLY_RST_0),
+							//.RD1_LOAD(!DLY_RST_0),
+							.RD1_LOAD(!DLY_RST_0 || reg_SDRAM_Reset),
 							//.RD1_CLK(~VGA_CTRL_CLK),
 							.RD1_CLK(reg_HPS_Clk),
-							
+						 	
 							//	FIFO Read Side 2
 						   .RD2_DATA(Read_DATA2),
 							.RD2(Read),
@@ -480,7 +506,8 @@ Sdram_Control_4Port	u7	(
 							.RD2_MAX_ADDR(22'h100000+640*480),	// Allocate enough space for whole 640 x 480 display
 							.RD2_LENGTH(256),	// 8 bits long data storage
 							//.RD2_LENGTH(1),
-				        	.RD2_LOAD(!DLY_RST_0),
+				        	//.RD2_LOAD(!DLY_RST_0),
+							.RD2_LOAD(!DLY_RST_0),
 							.RD2_CLK(~VGA_CTRL_CLK),
 							
 							//	SDRAM Side - Initialize the SDRAM - Can only initialize one per design
@@ -510,8 +537,16 @@ I2C_CCD_Config 		u8	(
 							.I2C_SCLK(GPIO_1[24]),
 							.I2C_SDAT(GPIO_1[23])
 						);		
-	
+						
+						
+// Register for SDRAM Read Reset
+wire HPS_SDRAM_Reset;
+reg reg_SDRAM_Reset;
+initial reg_SDRAM_Reset = 1;
+always@(HPS_SDRAM_Reset) reg_SDRAM_Reset <= ~HPS_SDRAM_Reset;
+
 // Register for simulated HPS clock
+wire HPS_CLK;
 reg reg_HPS_Clk;	
 initial reg_HPS_Clk = 0;
 always@(HPS_CLK) reg_HPS_Clk <= HPS_CLK;
@@ -520,7 +555,7 @@ wire [31:0] HPS_Digits;
 wire [9:0] HPS_State;
 		  
 	mysystem u0 (
-         .sdram_clk_clk                (sdram_ctrl_clk),                //             sdram_clk.clk
+        .sdram_clk_clk                (sdram_ctrl_clk),                //             sdram_clk.clk
         .dram_clk_clk                 (DRAM_CLK),                 //              dram_clk.clk
         .d5m_clk_clk                  (CCD_MCLK),                  //               d5m_clk.clk
         .vga_clk_clk                  (VGA_CTRL_CLK),                   //               vga_clk.clk
@@ -568,10 +603,11 @@ wire [9:0] HPS_State;
         .imgdata_in14_export      (Read_DATA1[14]),      //        imgdata_in14.export
         //.imgdata_in15_export      (Read_DATA1[15]),      //        imgdata_in15.export
 
-		  .roi_top_in_export        ({1'b0,roi_top[31:1]}),        //          roi_top_in.export
+		  .roi_top_in_export        ({1'b0,roi_top[31:1]} + 1),        //          roi_top_in.export
 		  .roi_left_in_export       ({1'b0,roi_left[31:1]}),       //         roi_left_in.export
-        .roi_right_in_export      ({1'b0,roi_right[31:1]}),       //        roi_right_in.export
-		  .roi_bottom_in_export     ({1'b0,roi_bot[31:1]}),     //       roi_bottom_in.export
+        .roi_right_in_export      ({1'b0,roi_right[31:1]} - 38),       //        roi_right_in.export
+		  .roi_bottom_in_export     ({1'b0,roi_bot[31:1]} - 1),     //       roi_bottom_in.export
+		  .hps_sdram_reset_export   (HPS_SDRAM_Reset)
     );
 	
 endmodule

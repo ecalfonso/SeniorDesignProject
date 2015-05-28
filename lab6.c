@@ -11,9 +11,10 @@ volatile int * oStart			= (int *) 0xFF200180;
 volatile int * oClock			= (int *) 0xFF200130;		// Increments counter register in verilog
 volatile int * oState			= (int *) 0xFF200140;		// Used to show the state with LEDs
 volatile int * oDigits			= (int *) 0xFF200150;		// Displays proposed digits to HEX modules
+volatile int * SDRAM_Reset      = (int *) 0xFF200000;
 
 volatile int * roi_top		= (int *) 0xFF200170;
-volatile int * roi_bot		= (int *) 0xFF200120;
+volatile int * roi_bottom	= (int *) 0xFF200120;
 volatile int * roi_left		= (int *) 0xFF200020;
 volatile int * roi_right	= (int *) 0xFF200010;
 
@@ -100,7 +101,8 @@ int main(void){
 	// -----------------------------------------------------------------------------------
 	
 	// Image variables
-	int imgArr[480][640];				// Array that holds image
+	//int imgArr[480][640];				// Array that holds image
+	int **imgArr;
 	
 	// We use a buffer of 10% on each side
 	int colsMin		= 64; 		// 640*10%
@@ -120,6 +122,9 @@ int main(void){
 	int colsSumMax = 0;
 	int rowsLevel = 0;
 	int colsLevel = 0;
+	
+	int roi_width 	= 0;
+	int roi_height	= 0;
 	
 	int binaryRowsSumArr[480] = { 0 };	// We transform these values into binary values
 	int binaryColsSumArr[640] = { 0 };	//    according to the calculated level
@@ -143,7 +148,6 @@ int main(void){
 	float sum;
 	float Z1[200];
 	float Z2[200];
-	int max = 0;
 	int pos = 0;
 	
 	int answer = 0;
@@ -157,10 +161,11 @@ int main(void){
 	//
 	// -----------------------------------------------------------------------------------
 	printf("System restart\n");
+	*SDRAM_Reset = 1;			// SDRAM_Reset == 0 means we're waiting, PIO wants posedge
 	*oStart = 1;				// Initiate clock system
 	*oClock = 0;				// Set HPS simulated clock to 0
 	*oDigits = 0;
-
+	
 	initCounters(); 
 	volatile unsigned int time;
 
@@ -170,14 +175,10 @@ int main(void){
 		// 
 		// Reset the variables for next iteration
 		//
-		// -----------------------------------------------------------------------------------
-		//for (i = 0; i < 640; i++) colsSumArr[i] = 0;
-		//for (i = 0; i < 480; i++) rowsSumArr[i] = 0;
-		
+		// -----------------------------------------------------------------------------------	
 		memset(colsSumArr, 0, sizeof(colsSumArr));
 		memset(rowsSumArr, 0, sizeof(rowsSumArr));
 		
-		max = -100000000;
 		answer = 0;
 		
 		rowsSumMax = 0;
@@ -190,11 +191,14 @@ int main(void){
 		// -----------------------------------------------------------------------------------
 		*oState = 1;				// State 1 - Ready
 			
+		*SDRAM_Reset = 1;			// SDRAM_Reset == 0 means we're waiting, PIO wants posedge
+			
 		if (RECORD_TIME != 2)
 		{
 			printf("Enter (2) for infinite loop, (1) for timing run, (0) just to run: ");
 			scanf("%d", &RECORD_TIME);
 		}
+		
 		
 		switch (RECORD_TIME)
 		{
@@ -204,9 +208,33 @@ int main(void){
 			default:	RECORD_TIME = 0;
 		}
 		
-		*oStart = 0;				// Stop camera, begin system
+		*oStart = 1;				// Stop camera, begin system
+		*SDRAM_Reset = 0;			
+		*SDRAM_Reset = 1;			
+
+		if (RECORD_TIME) time = getCycles();
+		// Grab ROI indices from HW
+		roiTop 		= *roi_top;
+		roiBottom 	= *roi_bottom;
+		roiLeft 	= *roi_left;
+		roiRight 	= *roi_right;
+		
+		roi_width 	= roiRight - roiLeft;
+		roi_height	= roiBottom - roiTop;
+		
+		if (RECORD_TIME) time = getCycles() - time;
+		if (RECORD_TIME) printf("Cycles: %d\n\n", time);
 		if (RECORD_TIME) time = getCycles();
 		
+		//dynamically allocate memory for ROI
+		imgArr = (int **)malloc(sizeof(int *)*(*roi_bottom));
+	
+		// for each row, malloc space 
+		// the array of arrays
+		for (i = 0; i < roiBottom; i++) {
+			imgArr[i] = (int *)malloc(sizeof(int)*640);
+		}
+						
 		// -----------------------------------------------------------------------------------
 		// 
 		// Read SDRAM -> imgArr[480][640] array of 1's and 0's
@@ -216,8 +244,8 @@ int main(void){
 		// -----------------------------------------------------------------------------------
 		
 		*oState = 3;				// State 2 - Reading image
-				
-		for (rows = 0; rows < 480; rows++)	// 640x480
+			
+		for (rows = 0; rows < roiBottom; rows++)	// 640x480
 		{	
 			for(cols = 0; cols < 640; cols += 8)
 			{
@@ -230,32 +258,20 @@ int main(void){
 				imgArr[rows][cols+5] = *iImgData10;
 				imgArr[rows][cols+6] = *iImgData12;
 				imgArr[rows][cols+7] = *iImgData14;
-				
-				/*				
-				imgArr[rows][cols] = *iImgData1;
-				imgArr[rows][cols+1] = *iImgData3;
-				imgArr[rows][cols+2] = *iImgData5;
-				imgArr[rows][cols+3] = *iImgData7;
-				imgArr[rows][cols+4] = *iImgData9;
-				imgArr[rows][cols+5] = *iImgData11;
-				imgArr[rows][cols+6] = *iImgData13;
-				imgArr[rows][cols+7] = *iImgData15;
-				*/
 			}
 		}
 		
 		time = getCycles() - time;
 		if (RECORD_TIME) printf("Cycles: %d\n\n", time);
-		
+
 		// Restart Clock because we're done with the SDRAM
 		*oStart = 1;
 		
-		// DEBUG - Print out entire image array with buffer
-		/*
-		printf("Printing out full image array with buffers\n");
-		for (rows = 48; rows < 432; rows++)	// 640x480
+		/* DEBUG - Print out entire image array with buffer
+ 		printf("Printing out full image array with buffers\n");
+		for (rows = 0; rows < *roi_bottom; rows++)	// 640x480
 		{
-			for(cols = 64; cols < 576; cols++)
+			for(cols = 0; cols < 640; cols++)
 			{					// Get current value of counter[1]		
 				if (imgArr[rows][cols])
 					printf(" ");
@@ -263,209 +279,16 @@ int main(void){
 					printf("0");
 			}
 			printf("\n");
-		}
-		//*/
+		} */
 		
-		// -----------------------------------------------------------------------------------
-		// 
-		// Detect white projector space
-		//	Put a 10% buffer on each side:	cols = 64 -> 576 : imgLeftSide -> imgRightSide
-		//									rows = 48 -> 432 : imgTopSide -> imgBotSide
-		//
-		// -----------------------------------------------------------------------------------
-		*oState = 7;				// State 3 - Detect projector
-		
-		//*
-		// Sum up rows and columns
-		for (cols = colsMin; cols < colsMax; cols++)
-		{
-			for (rows = rowsMin; rows < rowsMax; rows++)
-			{
-				colsSumArr[cols] += imgArr[rows][cols];
-				rowsSumArr[rows] += imgArr[rows][cols];
-			}
-		}
-		
-		// Find max value of rows sum
-		for (rows = 0; rows < 480; rows++)
-		{
-			if (rowsSumArr[rows] > rowsSumMax)
-				rowsSumMax = rowsSumArr[rows];
-		}
-		
-		// Calculate rows level - ~10% less than the max
-		rowsLevel = rowsSumMax - (rowsSumMax >> 3);
-		
-		// Find max value of cols sum
-		for (cols = 0; cols < 640; cols++)
-		{
-			if (colsSumArr[cols] > colsSumMax)
-				colsSumMax = colsSumArr[cols];
-		}
-		
-		// Calculate cols level - ~5% less than the max
-		colsLevel = colsSumMax - (colsSumMax >> 4);
-		
-		// Generate the array of binary values for rows and cols
-		for (rows = rowsMin; rows < rowsMax; rows++)
-		{
-			if (rowsSumArr[rows] > rowsLevel)
-				binaryRowsSumArr[rows] = 1;
-			else
-				binaryRowsSumArr[rows] = 0;
-		}
-		for (cols = colsMin; cols < colsMax; cols++)
-		{
-			if (colsSumArr[cols] > colsLevel)
-				binaryColsSumArr[cols] = 1;
-			else
-				binaryColsSumArr[cols] = 0;
-		}
-		
-		// Scan for left of white projector space
-		for (cols = colsMin; cols < colsMax; cols++)
-		{
-			if (binaryColsSumArr[cols] == 1)
-			{
-				projLeft = cols;
-				break;
-			}
-		}
-		
-		// Scan for right of white projector space
-		for (cols = colsMax - 1; cols > colsMin - 1; cols--)
-		{
-			if (binaryColsSumArr[cols] == 1)
-			{
-				projRight = cols;
-				break;
-			}
-		}
-		
-		// Scan for top side of white projector space
-		for (rows = rowsMin; rows < rowsMax; rows++)
-		{
-			if (binaryRowsSumArr[rows] == 1)
-			{
-				projTop = rows;
-				break;
-			}			
-		}
-
-		// Scan for bottom side of white projector space
-		for (rows = rowsMax - 1; rows > rowsMin - 1; rows--)
-		{
-			if (binaryRowsSumArr[rows] == 1)
-			{
-				projBottom = rows;
-				break;
-			}
-		}		
-		//*/
-		/*
-		// DEBUG - Print out the binary arrays
-		printf("rows: \n");
-		for (rows = rowsMin; rows < rowsMax; rows++)
-		{
-			if (binaryRowsSumArr[rows])
-				printf(".");
-			else
-				printf("0");
-		}
-		printf("\ncols: \n");
-		for (cols = colsMin; cols < colsMax; cols++)
-		{
-			if (binaryColsSumArr[cols])
-				printf(".");
-			else
-				printf("0");
-		}
-		printf("\n");
-		//*/
-		
-		
-		// DEBUG - Print white projector space
+		//* DEBUG - Print ROI
 		//printf("projLeft: %d, projRight: %d\n", projLeft, projRight);
 		//printf("projTop: %d, projBottom: %d\n", projTop, projBottom);
-	
-		/*
-		for (rows = projTop; rows < projBottom; rows++)
-		{
-			for (cols = projLeft; cols < projRight; cols++)
-			{
-				if (imgArr[rows][cols])
-					printf(" ");
-				else
-					printf("0");
-			}
-			printf("\n");
-		}
-		*/
+		printf("roi top: %d\n", roiTop);
+		printf("roi left: %d\n", roiLeft);
+		printf("roi right: %d\n", roiRight);
+		printf("roi bottom: %d\n", roiBottom);
 		
-		// -----------------------------------------------------------------------------------
-		// 
-		// Detect ROI black space
-		//	Using the same methods as detecting the white projector space
-		//
-		// -----------------------------------------------------------------------------------
-		*oState = 15;				// State 4 - Detect ROI
-		//*
-		// Calculate 10% buffer on projector space
-		projTop = projTop + (projTop >> 3);
-		projBottom = projBottom - (projBottom >> 3);
-		projLeft = projLeft + (projLeft >> 3);
-		projRight = projRight - (projRight >> 3);
-		
-		// Scan for top of ROI
-		for (rows = projTop; rows < projBottom; rows++)
-		{
-			if (binaryRowsSumArr[rows] == 0)
-			{
-				roiTop = rows;
-				break;
-			}
-		}
-		
-		// Scan for bottom of ROI
-		for (rows = projBottom - 1; rows > (projTop - 1); rows--)
-		{
-			if (binaryRowsSumArr[rows] == 0)
-			{
-				roiBottom = rows;
-				break;
-			}
-		}
-		
-		// Scan for left of ROI
-		for (cols = projLeft; cols < projRight; cols++)
-		{
-			if (binaryColsSumArr[cols] == 0)
-			{
-				roiLeft = cols;
-				break;
-			}
-		}
-		
-		for (cols = projRight - 1; cols > (projLeft - 1); cols--)
-		{
-			if (binaryColsSumArr[cols] == 0)
-			{
-				roiRight = cols;
-				break;
-			}
-		}
-		//*/
-		
-		// DEBUG - Print ROI
-		printf("roiLeft: %d, roiRight: %d\n", roiLeft, roiRight);
-		printf("roiTop: %d, roiBottom: %d\n", roiTop, roiBottom);
-		
-		printf("HW roi_top: %d\n", *roi_top);	
-		printf("HW roi_bot: %d\n", *roi_bot);			
-		printf("HW roi_left: %d\n", *roi_left - 20);		
-		printf("HW roi_right: %d\n", *roi_right - 20);
-		
-		/*
 		for (rows = roiTop; rows < roiBottom; rows++)
 		{
 			for (cols = roiLeft; cols < roiRight; cols++)
@@ -476,8 +299,9 @@ int main(void){
 					printf("0");
 			}
 			printf("\n");
-		}
-		*/
+		} //*/		
+		
+		free(imgArr);
 		
 	} // While(1)
 	
