@@ -218,6 +218,12 @@ RAW2RGB				u4	(
 //  FSM ROI Finder
 //=======================================================
 
+parameter IMG_TOP 	= 96;
+parameter IMG_BOTTOM = 960-96;
+parameter IMG_LEFT	= 128;
+parameter IMG_RIGHT 	= 1280-128;
+
+reg [31:0]	img_top;
 reg [31:0] 	roi_top;
 reg [31:0]	roi_bot;
 reg [31:0]	roi_left;
@@ -228,6 +234,7 @@ reg [4:0] 	roi_state;
 reg [127:0] line_buff;
 
 initial begin
+	img_top 			<= 0;
 	roi_top			<= 0;
 	roi_bot			<= 0;
 	roi_left			<= 0;
@@ -241,6 +248,7 @@ end
 	
 always@(posedge CCD_PIXCLK or negedge DLY_RST_1) begin
 	if (!DLY_RST_1) begin
+		img_top 			<= 0;
 		roi_top			<= 0;
 	   roi_bot			<= 0;
 	   roi_left			<= 0;
@@ -252,124 +260,99 @@ always@(posedge CCD_PIXCLK or negedge DLY_RST_1) begin
 		line_buff		<= 128'h00000000000000000000000000000000; // Zero out the buffer
 	end
 	else begin
-		case (roi_state)
-			0: begin	// Looking for proj whitespace
-				if (X_Cont == 0) begin
-					line_buff <= 128'h00000000000000000000000000000000;	// Reset line buffer
-				end
-				else begin
-					line_buff <= {line_buff[126:0], sCCD_B[0]};	// Shift the pixels into a buffer
-				
-					// Look for 128 white pixels, it's most likely the proj
-					if (Y_Cont > 50 && Y_Cont < 910 && line_buff == 128'hFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF) begin // If the line_buff == all 1s, we found the whitespace
-						roi_state <= 1;
+		if (IMG_LEFT <= X_Cont && X_Cont <= IMG_RIGHT && IMG_TOP <= Y_Cont && Y_Cont <= IMG_BOTTOM) begin
+			case (roi_state)
+				0: begin // Find Proj
+					if (X_Cont == IMG_LEFT) line_buff <= 128'h00000000000000000000000000000000;	// Reset line buffer
+					else begin
+						line_buff <= {line_buff[126:0], sCCD_B[0]};	// Shift the pixels into a buffer
+					
+						// Look for 128 white pixels, it's most likely the proj
+						if (X_Cont < 640 && line_buff == 128'hFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF) begin // If the line_buff == all 1s, we found the whitespace
+							roi_state <= 1;
+							img_top <= Y_Cont;
+						end
 					end
-				end
-			end // End 0
-			1: begin	// Now we're in the whitespace, look for the WHITE then BLACK edge of the ROI to find the TOP of ROI
-				if (X_Cont == 0) begin
-					line_buff <= 128'h00000000000000000000000000000000;	// Reset line buffer
-				end
-				else begin
-					line_buff <= {line_buff[126:0], sCCD_B[0]};	// Shift the pixels into a buffer
+					if (Y_Cont == IMG_BOTTOM) roi_state <= 0;
+				end // case 0
 				
-					// Look for WHITE/BLACK edge between a Y buffer of 50 and 910. It's most likely not there
-					// Only care about the first half of the screen 0->640
-
-					if (Y_Cont > 50 && Y_Cont < 910 && X_Cont < 640 && line_buff == 128'hFFFFFFFFFFFFFFFFFFFFFFFFFF000000) begin // Try to find the ROI
-						
-						roi_top <= Y_Cont;
-						roi_state <= 2;
+				1: begin // Find TOP
+					if (X_Cont == IMG_LEFT) line_buff <= 128'h00000000000000000000000000000000;	// Reset line buffer
+					else begin
+						line_buff <= {line_buff[126:0], sCCD_B[0]};	// Shift the pixels into a buffer
+					
+						// Only care about the first half of the screen 0->640
+						if (Y_Cont > img_top + 50 && X_Cont < 640 && line_buff == 128'hFFFFFFFFFFFFFFFFFFFFFFF000000000) begin // Try to find the ROI
+							roi_top <= Y_Cont;
+							roi_state <= 2;
+						end
 					end
-				end
+					if (Y_Cont == IMG_BOTTOM) roi_state <= 0;
+				end // case 1
 				
-				// We hit the end of the image, and didn't change state, so reset
-				if (Y_Cont == 960) roi_state <= 0;
-			end // End 1
-			2: begin // We're at the point of the top of the ROI, let's grab the LEFT index a couple of lines down from the TOP
-				if (X_Cont == 0) begin
-					line_buff <= 128'h00000000000000000000000000000000;	// Reset line buffer
-				end
-				else begin
-					line_buff <= {line_buff[126:0], sCCD_B[0]};	// Shift the pixels into a buffer
-				
-					// Look for WHITE/BLACK edge between a Y buffer of 50 and 910
-					// Only care about the first half of the screen 0->640
-					// Look many lines after TOP to take into account if the ROI is tilted
-					if (Y_Cont > roi_top + 24 && Y_Cont < 910 && X_Cont < 640 && line_buff == 128'hFFFFFFFFFFFFFFFFFFFFFFFFFF000000) begin // Try to find the ROI
-						roi_state <= 3;
-						roi_left <= X_Cont;
+				2: begin // Find LEFT
+					if (X_Cont == IMG_LEFT) line_buff <= 128'h00000000000000000000000000000000;	// Reset line buffer
+					else begin
+						line_buff <= {line_buff[126:0], sCCD_B[0]};	// Shift the pixels into a buffer
+					
+						// Only care about the first half of the screen 0->640
+						if (Y_Cont > roi_top + 24 && X_Cont < 640 && line_buff == 128'hFFFFFFFFFFFFFFFFFFFFFFF000000000) begin // Try to find the ROI
+							roi_left <= X_Cont;
+							roi_state <= 3;
+						end
 					end
-				end
+					if (Y_Cont == IMG_BOTTOM) roi_state <= 0;
+				end // case 2
 				
-				// We hit the end of the image, and didn't change state, so reset
-				if (Y_Cont == 960) roi_state <= 0;
-			end // End 2
-			3: begin // We look for the RIGHT now that we found LEFT
-				if (X_Cont == 0) begin
-					line_buff <= 128'h00000000000000000000000000000000;	// Reset line buffer
-				end
-				else begin
-					line_buff <= {line_buff[126:0], sCCD_B[0]};	// Shift the pixels into a buffer
-				
-					// Look for BLACK/WHITE edge between a Y buffer of 50 and 910
-					// Only care about the first half of the screen 640->1280
-					// Look many lines after TOP to take into account if the ROI is tilted
-					if (Y_Cont > roi_top + 24 && Y_Cont < 910 && X_Cont > 640 && line_buff == 128'h0000000FFFFFFFFFFFFFFFFFFFFFFFFF) begin // Try to find the ROI
-						roi_right <= X_Cont;
+				3: begin // Find RIGHT
+					if (X_Cont == IMG_LEFT) line_buff <= 128'hFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;	// Reset line buffer
+					else begin
+						line_buff <= {line_buff[126:0], sCCD_B[0]};	// Shift the pixels into a buffer
+					
+						// Only care about the second half of the screen 640->1280
+						if (Y_Cont > roi_top + 24 && X_Cont > 640 && line_buff == 128'h000000000FFFFFFFFFFFFFFFFFFFFFFF) begin // Try to find the ROI
+							roi_right <= Y_Cont;
+						end
 					end
 					
-					if (X_Cont == 1279) begin
-						roi_state <= 4;
+					if (X_Cont == IMG_RIGHT) roi_state <= 4;
+					if (Y_Cont == IMG_BOTTOM) roi_state <= 0;
+				end // case 3
+				
+				4: begin // find BOTTOM
+					if (X_Cont == IMG_LEFT) begin
+						line_buff <= 128'h00000000000000000000000000000000;	// Reset line buffer
+						roi_regionL 	<= 0;		
+						roi_regionR    <= 0;
+					end
+					else begin
+						line_buff <= {line_buff[126:0], sCCD_B[0]};	// Shift the pixels into a buffer
+
+						if (Y_Cont > roi_top && X_Cont < 640 && line_buff == 128'hFFFFFFFFFFFFFFFFFFFFFF0000000000) begin
+							roi_regionL <= 1;
+						end
+						if (Y_Cont > roi_top && X_Cont > 640 && line_buff == 128'h0000000000FFFFFFFFFFFFFFFFFFFFFF) begin
+							roi_regionR <= 1; // We're still in the ROI region
+						end
 					end
 
-				end
-				
-				// We hit the end of the image, and didn't change state, so reset
-				if (Y_Cont == 960) roi_state <= 0;
-			end
-			4: begin // TOP, LEFT, RIGHT are found, BOTTOM == when we stop finding the ROI edge
-				if (X_Cont == 0) begin
-					line_buff <= 128'h00000000000000000000000000000000;	// Reset line buffer
-					// roi_region is the switch saying we're still in the ROI
-					// It will <= 1 if we find a WHITE/BLACK edge in the current ROW
-					roi_regionL 	<= 0;		
-					roi_regionR    <= 0;
-				end
-				else begin	
-					line_buff <= {line_buff[126:0], sCCD_B[0]};	// Shift the pixels into a buffer
-				
-					// Keep cycling and look for LEFT and RIGHT edge
-					// Exit this state if we find that we don't see edges anymore
-					if (Y_Cont > roi_top && Y_Cont < 910 && X_Cont < 640 && line_buff == 128'hFFFFFFFFFFFFFFFFFFFFFFFFF0000000) begin
-						roi_regionL <= 1;
-						
+					if (X_Cont == IMG_RIGHT) begin
+						if (roi_regionL == 0 && roi_regionR == 0) begin
+							roi_state <= 5;
+							roi_bot <= Y_Cont;
+						end
 					end
-					if (Y_Cont > roi_top && Y_Cont < 910 && X_Cont > 640 && line_buff == 128'h0000000FFFFFFFFFFFFFFFFFFFFFFFFF) begin
-						roi_regionR <= 1; // We're still in the ROI region
-					end
-				end
+					
+					if (Y_Cont == IMG_BOTTOM) roi_state <= 0;
+				end // case 4
 				
-				// At the end of the ROW, check if we found a LEFT/RIGHT edges
-				// If not, set BOTTOM and go to wait state
-				if (X_Cont == 1279) begin
-					if (roi_regionL == 0 && roi_regionR == 0) begin
-						roi_state <= 5;
-						roi_bot <= Y_Cont;
-					end
-				end
+				5: if (Y_Cont == IMG_BOTTOM) roi_state <= 0;
+				default: roi_state <= 0;
 				
-				// We hit the end of the image, and didn't change state, so reset
-				if (Y_Cont == 960) roi_state <= 0;
-			end
-			5: begin	// Wait out the rest of the image
-				// We hit the end of the image, and didn't change state, so reset
-				if (Y_Cont == 960) roi_state <= 0;
-			end // End 4
-			default: roi_state <= 0;
-		endcase
-	end
-end
+			endcase
+		end // if (IMG_LEFT <= X_Cont && X_Cont <= IMG_RIGHT && IMG_TOP <= Y_Cont && Y_Cont <= IMG_BOTTOM)
+	end // else, if (!DLY_RST_1)
+end // always@(posedge CCD_PIXCLK or negedge DLY_RST_1)
 
 SEG7_LUT_8 			u5	(	
 							.oSEG0(HEX0),
