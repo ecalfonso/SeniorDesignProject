@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-//#include "neural_network_float.h"		// Neural network 
+#include "neural_network_float.h"		// Neural network 
 //#include "neural_network_double.h"	// Neural network 
 
 
@@ -152,6 +152,8 @@ int main(void){
 	
 	int answer = 0;
 	
+	int state = 0; 						// Variable for fanciness
+	
 	// Timing variables
 	int RECORD_TIME = 0;				// Variable that decides if we print (1) or not (0)
 	
@@ -189,7 +191,8 @@ int main(void){
 		// Prompt user to begin
 		//
 		// -----------------------------------------------------------------------------------
-		*oState = 1;				// State 1 - Ready
+		state = 1;
+		*oState = state;				// State 1 - Ready
 			
 		*SDRAM_Reset = 1;			// SDRAM_Reset == 0 means we're waiting, PIO wants posedge
 			
@@ -199,6 +202,7 @@ int main(void){
 			scanf("%d", &RECORD_TIME);
 		}
 		
+		if (RECORD_TIME) time = getCycles();
 		
 		switch (RECORD_TIME)
 		{
@@ -212,7 +216,6 @@ int main(void){
 		*SDRAM_Reset = 0;			
 		*SDRAM_Reset = 1;			
 
-		if (RECORD_TIME) time = getCycles();
 		// Grab ROI indices from HW
 		roiTop 		= *roi_top;
 		roiBottom 	= *roi_bottom;
@@ -221,10 +224,6 @@ int main(void){
 		
 		roi_width 	= roiRight - roiLeft;
 		roi_height	= roiBottom - roiTop;
-		
-		if (RECORD_TIME) time = getCycles() - time;
-		if (RECORD_TIME) printf("Cycles: %d\n\n", time);
-		if (RECORD_TIME) time = getCycles();
 		
 		//dynamically allocate memory for ROI
 		imgArr = (int **)malloc(sizeof(int *)*(*roi_bottom));
@@ -242,8 +241,8 @@ int main(void){
 		//  Convert to 0's and 1's in C
 		//
 		// -----------------------------------------------------------------------------------
-		
-		*oState = 3;				// State 2 - Reading image
+		state = 3;
+		*oState = state;				// State 2 - Reading image
 			
 		for (rows = 0; rows < roiBottom; rows++)	// 640x480
 		{	
@@ -260,9 +259,6 @@ int main(void){
 				imgArr[rows][cols+7] = *iImgData14;
 			}
 		}
-		
-		time = getCycles() - time;
-		if (RECORD_TIME) printf("Cycles: %d\n\n", time);
 
 		// Restart Clock because we're done with the SDRAM
 		*oStart = 1;
@@ -281,7 +277,7 @@ int main(void){
 			printf("\n");
 		} */
 		
-		//* DEBUG - Print ROI
+		/* DEBUG - Print ROI
 		//printf("projLeft: %d, projRight: %d\n", projLeft, projRight);
 		//printf("projTop: %d, projBottom: %d\n", projTop, projBottom);
 		printf("roi top: %d\n", roiTop);
@@ -300,6 +296,158 @@ int main(void){
 			}
 			printf("\n");
 		} //*/		
+		
+		// -----------------------------------------------------------------------------------
+		// 
+		// Segmentation loop
+		//	Iterate through the digits of the ROI
+		//	# of digits ~= ROI width / ROI height
+		//	
+		//
+		// -----------------------------------------------------------------------------------
+		state = 7;
+		*oState = 7;				// State 5 - Segmentation
+				
+		numDigits = round((roiRight - roiLeft)*1.0/(roiBottom - roiTop));
+		numDigits = myMin(numDigits);
+		digitWidth = round((roiRight - roiLeft)*1.0/ numDigits);
+		digitHeight = roiBottom - roiTop;
+				
+		for (currentDigit = 0; currentDigit < numDigits; currentDigit++)
+		{
+			// -----------------------------------------------------------------------------------
+			// 
+			// Resize the segmented digit
+			//
+			// -----------------------------------------------------------------------------------
+						
+			segmentIntensity = 0;
+			// Create a 28x28 by sampling every 1/28th of the ROI
+			for (i = 0; i < 28; i++)
+			{
+				for (j = 0; j < 28; j++)
+				{
+					x = round(i*(digitHeight - 1) / 27);
+					y = round(j*(digitWidth - 1) / 27);
+					
+					// X -> Height, doesn't change
+					// Y -> Width, the index changes as we move across the ROI
+					digitArr[i + j * 28] = imgArr[roiTop + x][roiLeft + currentDigit*digitWidth + y];
+					
+					// Try to see if image is mainly whitespace
+					segmentIntensity += digitArr[i + j * 28];
+					if (segmentIntensity > 275)
+						goto skip_digit;
+				}
+			}
+						
+			// -----------------------------------------------------------------------------------
+			// 
+			// Check if segment isn't 75%+ white pixels
+			//	It might be a bad segment, so skip
+			//
+			// -----------------------------------------------------------------------------------
+			
+			
+			/* DEBUG - Print out the 28x28 matrix
+ 			printf("Print 28x28\n");
+			for (i = 0; i<28; i++)
+			{
+				for (j = 0; j<28; j++)
+				{
+					if (digitArr[i + j*28])
+						printf(" ");
+					else
+						printf("0");
+				}
+				printf("\n");
+			}
+			 */
+			
+			// -----------------------------------------------------------------------------------
+			// 
+			// Send 784x1 to Neural Network
+			//
+			// -----------------------------------------------------------------------------------
+			*oState = (state <<= 1) + 1;
+						
+			float Z3[10];
+			//apply the weight 1
+			//Multiplication Logic
+			for (i = 0; i < 200; i++) 
+			{
+				sum = 0;
+				for (k = 0; k < 784; k++) {
+					//sum = sum + W1[i][k] * digitArr[k];
+					if (digitArr[k])
+						sum += W1[i][k];
+				}
+				Z1[i] = sum;
+			}
+		
+			for (j = 0; j < 200; j++)
+			{
+				Z1[j] = Z1[j] + B1[j];
+			}
+		
+			float temp;
+			for (i = 0; i < 200; i++)
+			{
+				temp = exp(-Z1[i]);
+				Z1[i] = 1 / (1 + temp);
+			}
+		
+			//apply weight 2
+			//Multiplication Logic
+			for (i = 0; i < 200; i++)
+			{
+					sum = 0;
+					for (k = 0; k < 200; k++) {
+						sum = sum + W2[i][k] * Z1[k];
+					}
+					Z2[i] = sum;
+			}
+		
+			for (i = 0; i< 200; i++)
+			{
+				Z2[i] = Z2[i] + B2[i];
+			}
+		
+			for (i = 0; i < 200; i++)
+			{
+				temp = exp(-Z2[i]);
+				Z2[i] = 1 / (1 + temp);
+			}
+		
+			//apply weight 3
+			//Multiplication Logic
+			for (i = 0; i < 10; i++) {
+			
+					sum = 0;
+					for (k = 0; k < 200; k++) {
+						sum = sum + W3[i][k] * Z2[k];
+					}
+					Z3[i] = sum;
+			}
+		
+			float max = Z3[0];
+			
+			for (i = 0; i < 10; ++i)
+			{
+				if (Z3[i] > max)
+				{
+					max = Z3[i];
+					pos = i+1; //add one to the index because the index starts with 0
+				}
+			}
+					answer = answer + myPow(numDigits - (currentDigit + 1)) * myMod(pos);
+					skip_digit: ;
+		} // End for (currentDigit....
+		
+		time = getCycles() - time;
+		*oDigits = answer;
+		printf("Guess: %d\n", answer);
+		if (RECORD_TIME) printf("Cycles: %d\n\n", time);
 		
 		free(imgArr);
 		

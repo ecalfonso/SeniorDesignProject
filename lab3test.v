@@ -377,11 +377,13 @@ SEG7_LUT_8 			u5	(
 							.oSEG2(HEX2),
 							.oSEG3(HEX3),
 							.oSEG4(HEX4),
-							.oSEG5(HEX5),
+							.oSEG5(),
 							.oSEG6(),
 							.oSEG7(),
-							.iDIG ({dig03, dig02, dig01, dig3, dig2, dig1})		// Show the proposed digits on the HEX displays
+							.iDIG ({4'b0000, dig5, dig4, dig3, dig2, dig1})		// Show the proposed digits on the HEX displays
 						);
+						
+assign HEX5 = 7'b1111111;
 
 wire [3:0] dig6;
 wire [3:0] dig5;
@@ -391,32 +393,13 @@ wire [3:0] dig2;
 wire [3:0] dig1;
 						
 bin2dec 					(
-							//.iData (HPS_Digits),
-							.iData({1'b0,roi_right[31:1]}),
+							.iData (HPS_Digits),
 							.HunThousand(dig6),
 							.TenThousand(dig5),
 							.Thousands(dig4),
 							.Hundreds(dig3),
 							.Tens(dig2),
 							.Ones(dig1)
-						);
-
-wire [3:0] dig06;
-wire [3:0] dig05;
-wire [3:0] dig04;
-wire [3:0] dig03;
-wire [3:0] dig02;
-wire [3:0] dig01;
-						
-bin2dec 					(
-							//.iData (HPS_Digits),
-							.iData({1'b0,roi_left[31:1]}),
-							.HunThousand(dig06),
-							.TenThousand(dig05),
-							.Thousands(dig04),
-							.Hundreds(dig03),
-							.Tens(dig02),
-							.Ones(dig01)
 						);
 						
 //=======================================================
